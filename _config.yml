@@ -1,1 +1,61 @@
+# For Atom Feed
+domain: loader.cc
+author: Simon / Jinyu Liu
+email: simon.jinyu.liu@gmail.com
+
+# Site Settings
+locale              : "en-US zh-CN"
+title               : "Log4think"
+title_seprator      : "-"
+name                : "Simon / Jinyu Liu"
+description         : "2010-01-29 16:07:00 [com.log4think]-[WARN] chaos ..."
+baseurl             : "/"
+gh_repo             :
+teaser              :
+breadcrumbs         : true
+words_per_minute    : 200
+
+comments:
+    provider        : "disqus"
+    disqus:
+        shortname   :
+
+analytics:
+  provider               : google # false (default), "google", "google-universal", "custom"
+  google:
+    tracking_id          : UA-11903762-2
+
+markdown_ext: "markdown,mkdown,mkdn,mkd,md"
+
+# Conversion
+markdown: kramdown
+highlighter: rouge
+lsi: false
+excerpt_separator: "\n\n"
+incremental: false
+
+# standard jekyll configuration
+
+parentsite: https://log4think.com
+permalink: /articles/:title/
+gems:
+  - jekyll-paginate
+  - jekyll-sitemap
+  - jekyll-gist
+  - jekyll-feed
+  - jemoji
+
+exclude:
+- bin
+- config.rb
+- Gemfile
+- Gemfile.lock
+- gems
+- Procfile
+- Rakefile
+- README.md
+- script
+- vendor
+
+#
 theme: jekyll-theme-hacker
