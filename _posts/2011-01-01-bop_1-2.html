@@ -1,0 +1,48 @@
+---
+layout: post
+status: publish
+published: true
+title: 编程之美 1.2 中国相帅问题的一个简洁解法
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 402
+wordpress_url: http://log4think.com/?p=402
+date: '2011-01-01 22:57:45 +0800'
+date_gmt: '2011-01-01 14:57:45 +0800'
+categories:
+- C&#47;C++
+- Algorithm
+tags: []
+comments: []
+---
+<p>题目意思大概是，象棋棋盘上只有一相一帅，只能在9宫格内移动，且不能对面。要求给出相帅所有的位置的可能性，只能用一个变量。</p>
+<p>只用一个变量，第一感是用位操作。给九宫格编个号：</p>
+<pre>1 2 3<br />
+4 5 6<br />
+7 8 9<&#47;pre><br />
+遍历所有的位置，如果 位置编号 mod 3相同，说明在同一列中。按此思路，书中位操作的解法略显繁杂。这里一个简洁的的解法是：</p>
+<pre>  1 #include<br />
+  2<br />
+  3 void main()<br />
+  4 {<br />
+  5     short unsigned int x;<br />
+  6<br />
+  7     for (x = 0; (x &amp; 0xF0) < 0x90; x += 0x10 ) {<br />
+  8         for ( x &amp;= 0xF0; (x &amp; 0x0F) < 9; x++)<br />
+  9             if ((x >> 4) % 3 != (x &amp; 0x0F) % 3)<br />
+ 10                 printf("A = %d, B = %d\n", (x >> 4) + 1, (x &amp; 0x0F) + 1);<br />
+ 11     }<br />
+ 12 }<&#47;pre><br />
+如果不用位操作的话，另外一个解法比较赞：</p>
+<pre>BYTE i = 81;<br />
+while (i--)<br />
+{<br />
+    if (i &#47; 9 % 3 != i % 9 % 3)<br />
+        printf("A = %d, B = %d\n", i &#47; 9 + 1, i % 9 + 1);<br />
+}<&#47;pre></p>

@@ -1,0 +1,74 @@
+---
+layout: post
+status: publish
+published: true
+title: Setup Ghost blog system on Ubuntu
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 940
+wordpress_url: http://log4think.com/?p=940
+date: '2014-04-08 17:54:27 +0800'
+date_gmt: '2014-04-08 07:54:27 +0800'
+categories:
+- 系统(System)
+tags: []
+comments: []
+---
+<p>## Installation</p>
+<p>Make sure you have install all required package</p>
+<p>    sudo apt-get install npm nodejs</p>
+<p>Goto https:&#47;&#47;ghost.org&#47;download&#47; , download the latest zip file</p>
+<p>    $ wget https:&#47;&#47;ghost.org&#47;zip&#47;ghost-0.4.2.zip<br />
+    $ unzip ..&#47;ghost-0.4.2.zip -d ghost<br />
+    $ cd ghost<br />
+    $ npm install --production<br />
+    ...<br />
+    $ npm start</p>
+<p>    > ghost@0.4.2 start &#47;home&#47;simon&#47;downloads&#47;ghost<br />
+    > node index</p>
+<p>    Ghost is running in development...<br />
+    Listening on 127.0.0.1:2368<br />
+    Url configured as: http:&#47;&#47;my-ghost-blog.com<br />
+    Ctrl+C to shut down</p>
+<p>Now you can browse your own Ghost blog at http:&#47;&#47;127.0.0.1:2368</p>
+<p>> It's very possible that you got the below error when you run ```npm install --production```</p>
+<p>    > sqlite3@2.2.0 install &#47;home&#47;simon&#47;downloads&#47;ghost&#47;node_modules&#47;sqlite3<br />
+    > node-pre-gyp install --fallback-to-build                                                                       </p>
+<p>    &#47;usr&#47;bin&#47;env: node: No such file or directory<br />
+    npm WARN This failure might be due to the use of legacy binary "node"<br />
+    npm WARN For further explanations, please read<br />
+    &#47;usr&#47;share&#47;doc&#47;nodejs&#47;README.Debian                                                                              </p>
+<p>    npm ERR! sqlite3@2.2.0 install: `node-pre-gyp install --fallback-to-build`<br />
+    npm ERR! `sh "-c" "node-pre-gyp install --fallback-to-build"` failed with 127<br />
+    npm ERR!<br />
+    npm ERR! Failed at the sqlite3@2.2.0 install script.<br />
+    npm ERR! This is most likely a problem with the sqlite3 package,<br />
+    npm ERR! not with npm itself.<br />
+    npm ERR! Tell the author that this fails on your system:<br />
+    npm ERR!     node-pre-gyp install --fallback-to-build<br />
+    npm ERR! You can get their info via:<br />
+    npm ERR!     npm owner ls sqlite3<br />
+    npm ERR! There is likely additional logging output above.</p>
+<p>    npm ERR! System Linux 3.11.0-13-generic<br />
+    npm ERR! command "&#47;usr&#47;bin&#47;nodejs" "&#47;usr&#47;bin&#47;npm" "install" "--production"<br />
+    npm ERR! cwd &#47;home&#47;simon&#47;downloads&#47;ghost<br />
+    npm ERR! node -v v0.10.15<br />
+    npm ERR! npm -v 1.2.18<br />
+    npm ERR! code ELIFECYCLE<br />
+    npm ERR!<br />
+    npm ERR! Additional logging details can be found in:<br />
+    npm ERR!     &#47;home&#47;simon&#47;downloads&#47;ghost&#47;npm-debug.log<br />
+    npm ERR! not ok code 0</p>
+<p>This error is caused by the wrong ```node``` command symblic link in your system. To fix this, run the following command, then run ```npm install --production``` again.</p>
+<p>    sudo update-alternatives --install &#47;usr&#47;bin&#47;node node &#47;usr&#47;bin&#47;nodejs 10</p>
+<p>It should work now.</p>
+<p>## Configuration</p>
+<p>After start the Ghost successfully, you need to go to administration page to configure your Blog or write a new post.</p>
+<p>First, go to ```http:&#47;&#47;127.0.0.1:2368&#47;ghost&#47;```. It will redirect to sign up page. </p>
+<p>Then, type your inforamtion and 'Sign Up', you will be redirect to the administration page.</p>

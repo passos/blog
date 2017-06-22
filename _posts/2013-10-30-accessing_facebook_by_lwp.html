@@ -1,0 +1,29 @@
+---
+layout: post
+status: publish
+published: true
+title: Accessing Facebook by LWP
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 753
+wordpress_url: http://log4think.com/?p=753
+date: '2013-10-30 11:09:51 +0800'
+date_gmt: '2013-10-30 00:09:51 +0800'
+categories:
+- Perl
+tags: []
+comments: []
+---
+<p>Usually, we can get the content of a url by the following code in Perl</p>
+<p>    perl -MLWP::Simple -e 'getprint "http:&#47;&#47;www.google.com"';</p>
+<p>But if you try to use it to access Facebook, like this</p>
+<p>    perl -MLWP::Simple -e 'getprint "http:&#47;&#47;www.facebook.com"';</p>
+<p>you will get a page "Upadte your browser" instead of the real one. That's because Facebook doesn't like the default UserAgent of LWP or WWW::Curl.</p>
+<p>The simplest way to solve it is to change the default LWP user agent string to your own string.</p>
+<p>    perl -e 'use LWP::Simple qw($ua get); $ua->agent("My agent&#47;1.0"); print get "http:&#47;&#47;www.facebook.com";'</p>

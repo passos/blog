@@ -1,0 +1,87 @@
+---
+layout: post
+status: publish
+published: true
+title: 阅读笔记 20140103
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 862
+wordpress_url: http://log4think.com/title/
+date: '2014-01-03 16:54:48 +0800'
+date_gmt: '2014-01-03 05:54:48 +0800'
+categories:
+- 阅读笔记(ReadNotes)
+tags:
+- RxJava
+- FRP
+- BootStrap
+comments: []
+---
+<p>#Read Notes 2014-01-03</p>
+<p>###网站<br />
+####[技术人攻略](http:&#47;&#47;www.devlevelup.com)<br />
+IT人的访谈 郑柯供稿中？</p>
+<p>####[宁皓网 IT课程](http:&#47;&#47;ninghao.net)<br />
+主要以网站开发相关，几分钟一段，口音很奇怪的柔和。部分课程免费，是在线课程网站里见过做的最好的。</p>
+<p>###工具<br />
+####[bracks](http:&#47;&#47;brackets.io)<br />
+开源的网页开发编辑器，实时反应变化，CSS自动补全等等，支持各种平台。<br />
+>NOTE: 宁皓网课程中使用的编辑器</p>
+<p>###技术</p>
+<p>####[Bootstrap](http:&#47;&#47;getbootstrap.com)<br />
+Twitter的前端开发框架，相应式网页开发必备。<br />
+>NOTE:<br />
+[BootStrap常用模板](http:&#47;&#47;getbootstrap.com&#47;getting-started&#47;#template)<br />
+[BootStrap相关的前端开发工具和库](http:&#47;&#47;bootcss.com)</p>
+<p>###[html5-boilerplate](https:&#47;&#47;github.com&#47;h5bp&#47;html5-boilerplate)<br />
+极好的HTML5 CSS页面模板，基础模板字字珠玑。可配合Bootstrap使用。</p>
+<p>**如何加入BootStrap**</p>
+<p>下载BootStrap，解压得dist目录，复制对应文件到相应目录，修改index.html，head部分css最开始的位置添加</p>
+<p>```</p>
+<link rel="stylesheet" href="&#47;css&#47;bootstrap.css">
+<link rel="stylesheet" href="&#47;css&#47;bootstrap-theme.min.css">
+```</p>
+<p>尾部添加</p>
+<p>    <script src="&#47;js&#47;vendor&#47;bootstrap.min.js"><&#47;script></p>
+<p>####函数响应式编程(Functional Reactive Programming:FRP)<br />
+一种和事件流有关的编程方式，一系列事件组成了事件流。FRP非常类似于GOF的观察者模式。被观察者是一种Monads（昨天刚刚看到有人在知乎吐槽Haskell里面的Monads）</p>
+<p>1. 事件流，离散事件序列<br />
+2. 属性properties, 代表模型连续的值。</p>
+<p>Reactive Extensions (Rx) 原来是由微软提出的一个综合了异步和基于事件驱动编程的库包，使用可观察序列和LINQ-style查询操作。Rx最显著的特性是使用可观察集合(Observable Collection)来达到集成异步(composing asynchronous)和基于事件(event-based)的编程的效果。<br />
+[Rx的老家](http:&#47;&#47;rx.codeplex.com&#47;)</p>
+<p>**The Reactive Manifesto**<br />
+[原址](http:&#47;&#47;www.reactivemanifesto.org&#47;)<br />
+[中文](http:&#47;&#47;www.jdon.com&#47;45811)</p>
+<p>>**相关实现**<br />
+Rx.NET: .Net<br />
+RxJava: Java<br />
+ReactiveCocoa: IOS<br />
+RxJS: Javascript<br />
+RxCpp: C&#47;C++<br />
+Rx.rb: Ruby<br />
+RxPy: Python 3</p>
+<p>[**RxJava**](https:&#47;&#47;github.com&#47;Netflix&#47;RxJava&#47;wiki)<br />
+RxJava作为一个Functional reactive框架，提供了如下对被观察者的集合(事件流)处理能力：进行filtering, selecting, transforming, combining 和composing。提供Java、Scala、Clojure和Groovy语言实现。<br />
+[netflix的介绍](http:&#47;&#47;techblog.netflix.com&#47;2013&#47;02&#47;rxjava-netflix-api.html)</p>
+<p>**RxJava on Android**<br />
+- http:&#47;&#47;www.jdon.com&#47;45581<br />
+- http:&#47;&#47;www.importnew.com&#47;8321.html<br />
+- http:&#47;&#47;mttkay.github.io&#47;blog&#47;2013&#47;08&#47;25&#47;functional-reactive-programming-on-android-with-rxjava&#47;</p>
+<p>####分布式高并发 - Actor模型<br />
+[AKKA: 基于scala的平台](http:&#47;&#47;typesafe.com&#47;platform&#47;runtime&#47;akka)<br />
+http:&#47;&#47;www.jdon.com&#47;45728<br />
+http:&#47;&#47;www.jdon.com&#47;45516</p>
+<p>####42qu的源码<br />
+基于Tornado开发，很好的网站开发学习范例</p>
+<p>    hg clone https:&#47;&#47;bitbucket.org&#47;zuroc&#47;42qu&#47;</p>
+<p>####[Stackedit.io的源码](https:&#47;&#47;github.com&#47;benweet&#47;stackedit)<br />
+能否作为网站内置的编辑器？</p>
+<p>###杂类<br />
+####[Monad in Haskell](http:&#47;&#47;www.haskell.org&#47;haskellwiki&#47;Monad)<br />
+昨天看到有人在知乎吐槽Monad的理解，搜了一把，待学习</p>

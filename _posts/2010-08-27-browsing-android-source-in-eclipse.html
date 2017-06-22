@@ -1,0 +1,114 @@
+---
+layout: post
+status: publish
+published: true
+title: 在Eclipse中查看Android SDK的源代码
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 198
+wordpress_url: http://log4think.com/?p=198
+date: '2010-08-27 15:43:56 +0800'
+date_gmt: '2010-08-27 05:43:56 +0800'
+categories:
+- 译(translation)
+- Android
+tags:
+- Android
+- eclipse
+- source
+comments:
+- id: 9074
+  author: eclipse中查看android的SDK源代码 - 移动开发教程 - 开发者
+  author_email: ''
+  author_url: http://www.kaifazhe.com/mobile_school/248265.html
+  date: '2013-06-18 21:52:00 +0800'
+  date_gmt: '2013-06-18 11:52:00 +0800'
+  content: "<p>[...] 原理: http:&#47;&#47;log4think.com&#47;browsing-android-source-in-eclipse&#47;
+    [...]<&#47;p>\n"
+---
+<div>
+<p>via&nbsp;<a href="http:&#47;&#47;stuffthathappens.com&#47;blog&#47;2008&#47;11&#47;01&#47;browsing-android-source-in-eclipse&#47;">http:&#47;&#47;stuffthathappens.com&#47;blog&#47;2008&#47;11&#47;01&#47;browsing-android-source-in-eclipse&#47;<&#47;a></p>
+<p>Google的Android SDK中包含一个android.jar文件，里面有Android所有的公开类的API接口。同时，Google还提供了一个Eclipse插件，可以很容易的开始进行开发。但是，这里并没有一个类似于androidSrc.jar的文件，因此当我们试图在Eclipse去查看Android SDK的源代码的时候，会得到下面这样的一个页面：</p>
+<p><img title="Source Not Found" src="http:&#47;&#47;stuffthathappens.com&#47;blog&#47;wp-content&#47;uploads&#47;2008&#47;11&#47;picture-2.png" alt="" &#47;></p>
+<p>Google已经发布了Android所有的源代码，很大。要在Eclipse中查看Android的源代码，需要去<a href="http:&#47;&#47;source.android.com&#47;">http:&#47;&#47;source.android.com&#47;<&#47;a>（国内需翻墙），Get Source那个页面内按照指示一步步的将所有的东西都通过Git弄下来。很值得抽出一个晚上的时间来做这件事，因为如果能够随时查看源码，对于理解SDK如何工作的是非常有帮助的。</p>
+<h3><span style="font-size: 13px;">链接到Eclipse<&#47;span><&#47;h3><br />
+现在我们有了源码，应该可以告诉Eclipse如何找到它了。右键点击android.jar&mdash;&mdash;属性，可是却发现了这样的信息：</p>
+<p><img title="Modifications Not Allowed" src="http:&#47;&#47;stuffthathappens.com&#47;blog&#47;wp-content&#47;uploads&#47;2008&#47;11&#47;picture-1.png" alt="" &#47;></p>
+<p>嗯....那段话的大意是，当前的class path的设置属于'Android Library'，不允许用户修改。好吧，只能去看看ADT的源码了，看能否找到什么办法。</p>
+<h3>查看ADT源码<&#47;h3><br />
+当下载完Android源码之后，我们已经得到了所有内容，包括：操作系统、Dalvik虚拟机、Eclipse插件、公开的SDK...等等。</p>
+<p>在 com.android.ide.eclipse.adt.project.internal 包里，我找到一个名为&nbsp;AndroidClassspathContainerInitializer.java 的类，包含如下代码：</p>
+<pre class="prettyprint lang-java">IPath android_src = new Path(AdtPlugin.getOsAbsoluteAndroidSources());<&#47;pre><br />
+好，再来看看&nbsp;AdtPlugin.java:</p>
+<pre class="prettyprint lang-java">&#47;** Returns the absolute android sources path in the sdk *&#47;<br />
+public static String getOsAbsoluteAndroidSources() {<br />
+return getOsSdkFolder() + getOsRelativeAndroidSources();<br />
+}</p>
+<p>&#47;** Returns the android sources path relative to the sdk folder *&#47;<br />
+public static String getOsRelativeAndroidSources() {<br />
+return AndroidConstants.FD_ANDROID_SOURCES;<br />
+}<&#47;pre><br />
+最后来看看&nbsp;AndroidConstants.java:</p>
+<pre class="prettyprint lang-java">public static final String FD_ANDROID_SOURCES = "sources";<&#47;pre><br />
+搞定！</p>
+<h3>解决方案 #1<&#47;h3><br />
+根据上面的分析，我们可以在android SDK的安装目录内创建一个sources目录，与android.jar位于同一个目录内。之后，我们可以在之前下好的Android源码中找到所有我们需要的代码。SDK的代码在frameworks&#47;base&#47;core&#47;java，在这个目录下有一个android目录，我们需要将这个目录拷贝（链接）到SDK安装目录中的sources目录。你可能需要想想办法，把所有分散在不同Component的源码都弄到一起去。最终我们的目录结构大致如下：</p>
+<pre>SDK_PATH<br />
+  |-- android.jar<br />
+  +--docs&#47;...<br />
+  +--samples&#47;...<br />
+  +--sources<br />
+       +--android<br />
+       |      ...accounts, annotation, app, bluetooth, etc...<br />
+       +--com&#47;android&#47;etc...<br />
+       +--dalvik&#47;...<br />
+       +--java&#47;...<br />
+       +--javax&#47;...<&#47;pre><br />
+我把所有这样的目录都弄进来了，但是没有详细记录。</p>
+<p>译注（也就是我Simon Liu）：<br />
+上面的代码是适用于以前的老版本的ADT，目前最新版本的ADT已经不适用了。经过查看源代码发现，最新版本的ADT需要在SDK目录下的platforms\android-X对应的目录下建立sources目录，其中X是3、4、7、8之一的数字，对应不同的SDK版本。这也是一个比较合理的方案，毕竟不同版本的SDK的源码还是不一样的。</p>
+<p>如果你在Linux或者Mac下工作，sources的源码目录结构可以用我写的如下的一个Shell脚本来完成这个事情，在Android的源码目录下运行这个脚本，然后会在~&#47;workspace&#47;src-tree创建"几乎"所有Java源码的soft symbol link。之后也可以用tar带-h参数打包到windows下使用。你可以根据自己的需求修改一下。</p>
+<pre class="prettyprint lang-bsh">simon@simon-desktop:~&#47;bin$ cat make-src-tree<br />
+#!&#47;bin&#47;bash<br />
+# Author: Simon Liu <simon @log4think.com>, Beijing, China<br />
+# Date: 2010-08-27<br />
+# License: GPL</p>
+<p>curr_dir=$PWD<br />
+dest_dir=~&#47;workspace&#47;src-tree<br />
+if [ ! -z "$1" ]; then<br />
+        dest_dir=$1<br />
+fi</p>
+<p>rm -rf $dest_dir<br />
+mkdir -p $dest_dir</p>
+<p>for d in $(find -path .repo -prune \<br />
+    -or -path .git -prune \<br />
+    -or -path "*&#47;src&#47;com&#47;*" -type d -print \<br />
+    -or -path "*&#47;src&#47;org&#47;*" -type d -print \<br />
+    -or -path "*&#47;java&#47;com&#47;*" -type d -print \<br />
+    -or -path "*&#47;java&#47;org&#47;*" -type d -print \<br />
+    -or -path "*&#47;java&#47;android&#47;*" -type d -print \<br />
+    -or -path "*&#47;java&#47;javax&#47;*" -type d -print)<br />
+do<br />
+        sd=$(echo $d | sed 's#.*&#47;src&#47;\(.*\)&#47;#\1&#47;#g' | sed 's#.*&#47;java&#47;\(.*\)&#47;#\1&#47;#g')<br />
+        echo ";; $sd"</p>
+<p>        mkdir -p $dest_dir&#47;$sd<br />
+        for f in $(cd $d; find . -mindepth 0 -maxdepth 1 -type f | sed 's#^.&#47;##g'); do<br />
+                echo "        $f"<br />
+                ln -s $curr_dir&#47;$d&#47;$f $dest_dir&#47;$sd&#47;$f<br />
+        done<br />
+done<br />
+<&#47;simon><&#47;pre><br />
+现在，当我再去查看Android SDK类的时候，可以看到源码了：</p>
+<p><img title="Browsing Source" src="http:&#47;&#47;stuffthathappens.com&#47;blog&#47;wp-content&#47;uploads&#47;2008&#47;11&#47;picture-3.png" alt="" &#47;></p>
+<h3>解决方案 #2<&#47;h3></p>
+<div>如果你实在不愿意把所有的Android源码拷贝到SDK目录里面去，也可以创建一个Eclispe User Library并把源码附加上去。<&#47;div></p>
+<div><&#47;div></p>
+<div><&#47;div></p>
+<div>via&nbsp;<a href="http:&#47;&#47;stuffthathappens.com&#47;blog&#47;2008&#47;11&#47;01&#47;browsing-android-source-in-eclipse&#47;">http:&#47;&#47;stuffthathappens.com&#47;blog&#47;2008&#47;11&#47;01&#47;browsing-android-source-in-eclipse&#47;<&#47;a><&#47;div><br />
+<&#47;div></p>

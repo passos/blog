@@ -1,0 +1,42 @@
+---
+layout: post
+status: publish
+published: true
+title: 阅读笔记 20140115
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 880
+wordpress_url: http://log4think.com/?p=880
+date: '2014-01-16 10:47:16 +0800'
+date_gmt: '2014-01-15 23:47:16 +0800'
+categories:
+- 工具(Tool)
+tags: []
+comments: []
+---
+<p>[TOC]</p>
+<p>###持续集成以及自动化部署</p>
+<p>####Linux Container + Checkpoint&#47;Restore<br />
+[LXC](http:&#47;&#47;linuxcontainers.org&#47;) + [CRIU](http:&#47;&#47;criu.org&#47;)</p>
+<p>####Docker<br />
+将程序的安装流程封装成Dockerfile，用hg&#47;git进行版本管理。</p>
+<p>两种部署方案</p>
+<p>- 用post_commit_hook配合Fabric脚本来完成自动脚本部署<br />
+- 用buildbot&#47;jerkins做持续集成，push的时候自动激活ci进行部署</p>
+<p>**部署**</p>
+<p>1. 使用docker来build一个全新的image，build成功后打上标签<br />
+2. 停掉运行老的image的container，用docker run -v &#47;path&#47;to&#47;volume 的方式，将container上的数据挂载到新的container上，实现新版本的升级<br />
+3. 如果程序需要不中断升级的话，可以考虑将数据库独立出来，然后在跑应用的前面加上hipache之类的动态代理，在不停掉老的container的情况下，运行新的container，在动态代理上将流量指向新的container<br />
+4. 如果需要回滚的话，那就停掉新的container，用docker restart将老的container重新跑起来。这中间如果要实现跟代码仓库的联动，可能需要在build image的时候打上合适的标签，然后检测到有老的已经build了的image，就直接找这个image已有的container来用。<br />
+5. 在运行环境中，supervisor可能会用上，virtualenv可以不用，因为docker本身就是隔离环境，可以直接用系统的python环境。</p>
+<p>问题</p>
+<p>1. 默认使用端口映射模式，而不是路由模式，iptables在设定的时候非常容易冲突（尤其是并行启动关闭虚拟机的时候），而且性能不会太高。<br />
+2. 默认使用lxc-kill来干掉虚拟机，但是用户程序写的不好的情况下，虚拟机有可能干不掉，会剩下一个defunct进程。这时候虚拟机已经&ldquo;退散&rdquo;了，但是资源项释放不干净。例如vethXXX虚拟接口一直在系统里删不掉。<br />
+3. API全部都undocument，几乎每个版本一改。不过还好，这是开发中系统的特性。</p>
+<p>[Source via](https:&#47;&#47;groups.google.com&#47;forum&#47;#!msg&#47;Python-cn&#47;Sf3kCnEAcnc&#47;wx6EkHLVrpkJ)</p>

@@ -1,0 +1,643 @@
+---
+layout: post
+status: publish
+published: true
+title: Go 编程语言入门教程
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+excerpt: "本文档是关于Go编程语言基础的一个介绍性的入门教程，偏向于熟悉C或C++的读者。本文并非一份语言的完整指南，如果需要的话，你应该去看看 “语言规范”（language
+  specification）。当读完本教程之后，你可能会希望继续看看“Effective Go”，这份文 档更深入的挖掘如何使用Go语言。此外还有一份《三日入门》的教程可供参考:
+  第一日, 第二日, 第三日.\r\n\r\n本文将会以一 系列适当的程序来说明语言的一些关键特性。所有的示例程序都是可运行的（在撰写本文时），并且这些程序都会提交到版本库的/doc/progs/目录下。"
+wordpress_id: 105
+wordpress_url: http://log4think.com/?p=105
+date: '2010-03-31 02:21:04 +0800'
+date_gmt: '2010-03-30 15:21:04 +0800'
+categories:
+- 译(translation)
+tags:
+- go
+- google
+- translate
+comments: []
+---
+<p>> 原文：http:&#47;&#47;golang.org<br />
+> 翻译：刘金雨 http:&#47;&#47;log4think.com</p>
+<p>## 介绍</p>
+<p>本文档是关于Go编程语言基础的一个介绍性的入门教程，偏向于熟悉C或C++的读者。本文并非一份语言的完整指南，如果需要的话可以参考[语言规范](http:&#47;&#47;golang.org&#47;ref&#47;spec)。读完本教程之后，你可以继续学习[Effective Go](http:&#47;&#47;golang.org&#47;doc&#47;effective_go.html)，这份文档会更深入的挖掘如何使用Go语言。</p>
+<p>此外还有一份《三日入门》的教程可供参考:</p>
+<p>- [第一日](http:&#47;&#47;www.yeeyan.com&#47;doc&#47;GoCourseDay1.pdf)<br />
+- [第二日](http:&#47;&#47;www.yeeyan.com&#47;doc&#47;GoCourseDay2.pdf)<br />
+- [第三日](http:&#47;&#47;www.yeeyan.com&#47;doc&#47;GoCourseDay3.pdf)</p>
+<p>本文将会以一系列适当的程序来说明语言的一些关键特性。所有的示例程序都是可运行的（在撰写本文时），并且这些程序都会提交到版本库的```&#47;doc&#47;progs&#47;```目录下。</p>
+<p>程序片段都会标注上在源文件中的行号，为了清晰起见，空行前面的行号留空。</p>
+<p>## Hello World</p>
+<p>先从一个最常见的开始:</p>
+<p>    05    package main</p>
+<p>    07    import fmt "fmt"  &#47;&#47; 本包实现了格式化输入输出</p>
+<p>    09    func main() {<br />
+    10        fmt.Printf("Hello, world; or &Kappa;&alpha;&lambda;&eta;&mu;έ&rho;&alpha; &kappa;ό&sigma;&mu;&epsilon;; or こんにちは 世界n");<br />
+    11    }</p>
+<p>每份Go的源文件都会使用```package```语句声明它的包名。同时也可以通过导入其它包来使用其中定义的功能。这段代码导入了包```fmt```来调用我们的老朋友&mdash;&mdash;现在它的开头字母是大写的，并且前面带有包名限定```fmt.Printf```。</p>
+<p>函数的声明使用关键字func，整个程序将会从为```main```包中的```main```函数开始（经过初始化之后）。</p>
+<p>字符串常量可以包含Unicode字符，采用UTF-8编码（事实上，所有Go程序的源文件都是使用UTF-8编码的）。</p>
+<p>注释的方式同C++一样：```&#47;* ... *&#47;```或```&#47;&#47; ...```</p>
+<p>稍后我们会继续提到```print```。</p>
+<p>## 编译</p>
+<p>Go是一个编译型语言。目前有两个编译器，其中```gccgo```编译器采用了GCC作为后端，此外还有一系列根据其所适用的架构命名的编译器，例如```6g```适用于64位的x86结构，8g 适用于32位的x86结构，等等。这些编译器比gccgo运行的更快、生成的代码更加有效率。在撰写本文的时候（2009年底），他们还具有一个更加健壮的运行期系统，但是gccgo也正在迎头赶上。</p>
+<p>下面来看看如何编译和运行程序。采用```6g```是这样的</p>
+<p>    $ 6g helloworld.go  编译; 中间代码位于 helloworld.6 中<br />
+    $ 6l helloworld.6   链接; 输出至 6.out<br />
+    $ 6.out<br />
+    Hello, world; or &Kappa;&alpha;&lambda;&eta;&mu;έ&rho;&alpha; &kappa;ό&sigma;&mu;&epsilon;; or こんにちは 世界<br />
+    $</p>
+<p>```gccgo```的方式看起来更加传统一些。</p>
+<p>    $ gccgo helloworld.go<br />
+    $ a.out<br />
+    Hello, world; or &Kappa;&alpha;&lambda;&eta;&mu;έ&rho;&alpha; &kappa;ό&sigma;&mu;&epsilon;; or こんにちは 世界<br />
+    $</p>
+<p>## Echo</p>
+<p>下一步，来实现一个Unix的传统命令Echo：</p>
+<p>    05    package main</p>
+<p>    07    import (<br />
+    08        "os";<br />
+    09        "flag";  &#47;&#47; command line option parser<br />
+    10    )</p>
+<p>    12    var omitNewline = flag.Bool("n", false, "don't print final newline")</p>
+<p>    14    const (<br />
+    15        Space = " ";<br />
+    16        Newline = "n";<br />
+    17    )</p>
+<p>    19    func main() {<br />
+    20        flag.Parse();   &#47;&#47; Scans the arg list and sets up flags<br />
+    21        var s string = "";<br />
+    22        for i := 0; i < flag.NArg(); i++ {<br />
+    23            if i > 0 {<br />
+    24                s += Space<br />
+    25            }<br />
+    26            s += flag.Arg(i);<br />
+    27        }<br />
+    28        if !*omitNewline {<br />
+    29            s += Newline<br />
+    30        }<br />
+    31        os.Stdout.WriteString(s);<br />
+    32    }</p>
+<p>这段程序很小，但是却有几个新出现的概念。前面这个例子中，我们看到可以使用```func```来声明一个函数，同时关键字```var、const```和```type```目前还没有用到）也可以用于声明，就好像```import```一样。</p>
+<p>注意，我们可以将同一类的声明放到括号中，以分号分隔。例如第7-10行和第14-17行。但也并非一定要如此，例如可以这样写```</p>
+<p>    const Space = " "<br />
+    const Newline = "n"</p>
+<p>分号在此处并不是必须的。事实上，任何顶层声明后面都不需要分号。但如果要是在一个括号内进行一系列的声明，就需要用分号来分割了。</p>
+<p>你可以像在C、C++或Java中那样去使用分号，但如果你愿意的话，在很多情况下都可以省略掉分号。分号是用于表示语句间的**分隔**，而非表示其**中止**。因此，对于一个代码块中的最后一条语句来说，有无分号皆可。大括号之后的分号也是可选的，就像C语言中的一样。</p>
+<p>比对一下```echo```的源代码，只有第8、15和21行必须要加分号，当然第22行中的```for```语句中为了分隔三个表达式也需要加分号。第9、16、26和31行的分号都不是必须的，加上分号只是为了以后再增加语句的时候方便而已。</p>
+<p>这个程序导入了os包以访问```Stdout```变量，```Stdout```的类型是```*os.File```。```import```语句实际上是个声明：通常情况下（如hello world程序中那样），它声明了一个标识符```fmt```用于访问导入的包的成员变量，而包是从当前目录或标准库下的```fmt```文件中导入的。在这个程序中，我们为导入的包显式的指定了一个名字，默认情况下，包名是采用在导入的包里面已经定义好的名字，通常会与文件名一致。因此在这个&ldquo;hello world&rdquo;程序中，可以只写```import "fmt"```。你可以任意为包指定一个导入名，但通常只有在解决名字冲突的情况下才有必要这样做。</p>
+<p>有了```os.Stdout```，我们就可以用它的```WriteString```方法打印字符串了。</p>
+<p>导入了```实 际flag```包之后，第12行创建了一个全局变量来保存 echo 的```-n```选项标志。```omitNewline```变量的类型是 *bool &mdash;&mdash;指向bool值的指针。</p>
+<p>在```main.main```中进行了参数解析，并创建了一个本地字符串类型的变量用于构造输出的内容。声明语句如下</p>
+<p>    var s string = "";</p>
+<p>这里用到了关键字```var```，后面跟变量名和数据类型，之后可以继续接=来赋初值。</p>
+<p>Go试图尽量保持简洁，这个声明也可以用更短的形式。因为初值是一个字符串类型的常量，没有必要再声明数据类型了，因此这个声明可以写成这样：</p>
+<p>    var s = "";</p>
+<p>或者也可以直接用更短的形式：</p>
+<p>    s := "";</p>
+<p>操作符```:=```在 Go 语言里经常会用在赋初值的声明中，比如下面这个```for```语句的声明：</p>
+<p>    22    for i := 0; i < flag.NArg(); i++ {</p>
+<p>```flag```包会解析命令行参数，并将参数值保存在一个列表中。</p>
+<p>Go语言中的```for```语句和C语言中的有几个不同之处。首先，for是唯一的循环语句，没有```while```语句或```do```语句。其次，for语句后面的三个子句不需要圆括号，但大括号是必须的。这一条对```if```和```switch```语句同样适用。稍后还会有几个例子演示```for```语句的其它用法。</p>
+<p>循环体中通过追加（+=）标志和空格构造字符串```s```。循环之后，如果没有设置```-n```标志，程序追加一个空行，最后输出结果。</p>
+<p>注意，函数```main.main```没有返回值。它就是这样定义的，如果到达了```main.main```的末尾就表示&ldquo;成功&rdquo;，如果想表明出错并返回，可以调用</p>
+<p>    os.Exit(1)</p>
+<p>```os```包还包含一些其他的常用功能，例如```os.Args```会被```flag```包用于访问命令行参数。</p>
+<p>## 插播：数据类型 Types</p>
+<p>Go支持一些常见的数据类型，例如```int```和```float```，其值采用机器&ldquo;适用&rdquo;的大小来表示。也有定义了明确大小的数据类型，例如```int8```、```float64```等，以及无符号整数类型，例如```uint```、```uint32```等。这些都是完全不同的数据类型，即使```int```和```int32```都是32位整数，但它们是不同的类型。对于表示字符串元素的类型```byte```和```uint8```也是同样如此。</p>
+<p>说到字符串（```string```），这也是一个内置的数据类型。字符串的值不仅仅是一个```byte```的数组，它的值是**不可改变**的。一旦确定了一个字符串的值，就不能再修改了。但一个字符串**变量**的值可以通过重新赋值来改变。下面这段来自```strings.go```的代码是合法的：</p>
+<p>    11    s := "hello";<br />
+    12    if s[1] != 'e' { os.Exit(1) }<br />
+    13    s = "good bye";<br />
+    14    var p *string = &s;<br />
+    15    p = "ciao";</p>
+<p>然而下面这段代码是非法的，因为它试图修改一个字符串的值：</p>
+<p>    s[0] = 'x';<br />
+    (*p)[1] = 'y';</p>
+<p>按照C++的说法，Go的字符串有点类似带了```const```修饰符，指向字符串的指针也类似于一个 const 字符串的引用（reference）.</p>
+<p>没错，前面看到的那些是指针，然而Go语言中的指针在用法方面有所简化，后文会提到。</p>
+<p>数组的声明如下所示：</p>
+<p>    var arrayOfInt [10]int;</p>
+<p>数组同字符串一样是&ldquo;值&rdquo;，但是却是可变的。与C不同的是，C语言中```arrayOfInt```可以当做一个指向int的指针来用。在Go中，因为数组是**值**，因此```arrayOfInt```被看做（也被用做）指向数组的指针。</p>
+<p>数组的大小是其数据类型的一部分。但是，你可以声明一个**slice**变量，然后可以用一个指向具有相同元素类型的数组指针给它赋值，更常见的是用一个形式为```a[low : high]```的**slice**表达式，该表达式表示下标从```low```到```high-1```的子数组。 Slice 类型类似数组，但没有显式指定大小(```[]```之于```[10]```)，用于表示一个隐性（通常是匿名的）数组。如果不同的 slice 都是表示同一个数组中的数据，它们可以共享该数组的内存，但不同的数组则永远不会共享内存数据。</p>
+<p>Slice 在 Go 程序中比数组更常见。它更灵活，并且具有引用的语义，效率也更高。其不足之处在于无法像数组一样精确控制存储方式，如果想在一个数据结构中保存一个具有 100个元素的序列，应该采用数组。</p>
+<p>当给函数传一个数组参数的时候，绝大多数情况下都会把参数声明为 slice 类型。当调用函数时，先取数组地址，然后Go会创建一个 slice 的引用，然后传这个引用过去。</p>
+<p>可以用 slice 来写这个函数(来自```sum.go```)：</p>
+<p>    09    func sum(a []int) int {   &#47;&#47; 返回一个整数<br />
+    10        s := 0;<br />
+    11        for i := 0; i < len(a); i++ {<br />
+    12            s += a[i]<br />
+    13        }<br />
+    14        return s<br />
+    15    }</p>
+<p>之后这样来调用：</p>
+<p>    19    s := sum(&[3]int{1,2,3});  &#47;&#47; a slice of the array is passed to sum</p>
+<p>注意在```sum()```的参数列表后面加 int 定义了其返回值类型（int）。```[3]int{1,2,3}```的形式是一个数据类型后面接一个大括号括起来的表达式，整个这个表达式构造出了一个值，这里是一个包含三个整数的数组。前面的```&```表示提取这个值的地址。这个地址会被隐性的转为一个 slice 传给```sum()```。</p>
+<p>如果想创建一个数组，但希望编译器来帮你确定数组的大小，可以用```...```作为数组大小：</p>
+<p>    s := sum(&[...]int{1,2,3});</p>
+<p>实际使用中，除非非常在意数据结构的存储方式，否则 slice 本身 （用[]且不带```&```） 就足够了：</p>
+<p>    s := sum([]int{1,2,3});</p>
+<p>除此之外还有map，可以这样初始化：</p>
+<p>    m := map[string]int{"one":1 , "two":2}</p>
+<p>```sum还第一次出现 了```内置函数```len()，用于返回元素数量。```可以用于字符串、数组、slice、map、map和channel.</p>
+<p>此外，```for```循环中的```range```也可以用于字符串、数组、slice、map、map和channel。例如</p>
+<p>    for i := 0; i < len(a); i++ { ... }</p>
+<p>遍历一个序列的每个元素，可以写成</p>
+<p>    for i, v := range a { ... }</p>
+<p>其中， i 会赋值为下标， v 会赋值为 a 中对应的值，[Effective Go](http:&#47;&#47;golang.org&#47;doc&#47;effective_go.html)中包含了更多的用法演示。</p>
+<p>## An Interlude about Allocation</p>
+<p>Go中的大多数数据类型都是值类型。对```int```、```struct```或数组的赋值会拷贝其内容。```new()```可以分配一个新的变量，并返回其分配的存储空间的地址。例如</p>
+<p>    type T struct { a, b int }<br />
+    var t *T = new(T);</p>
+<p>或者更常见的写法：</p>
+<p>    t := new(T);</p>
+<p>Some types&mdash;maps, slices, and channels (see below)&mdash;have reference semantics. If you're holding a slice or a map and you modify its contents, other variables referencing the same underlying data will see the modification. For these three types you want to use the built-in function```make()```:</p>
+<p>    m := make(map[string]int);</p>
+<p>This statement initializes a new map ready to store entries. If you just declare the map, as in</p>
+<p>    var m map[string]int;</p>
+<p>it creates a```nil```reference that cannot hold anything. To use the map, you must first initialize the reference using```make()```or by assignment from an existing map.</p>
+<p>Note that```new(T)```returns type```*T```while```make(T)```returns type```T```. If you (mistakenly) allocate a reference object with```new()```, you receive a pointer to a nil reference, equivalent to declaring an uninitialized variable and taking its address.</p>
+<p>## An Interlude about Constants</p>
+<p>Although integers come in lots of sizes in Go, integer constants do not. There are no constants like```0LL```or```0x0UL```. Instead, integer constants are evaluated as large-precision values that can overflow only when they are assigned to an integer variable with too little precision to represent the value.</p>
+<p>    const hardEight = (1 << 100) >> 97  &#47;&#47; legal</p>
+<p>There are nuances that deserve redirection to the legalese of the language specification but here are some illustrative examples:</p>
+<p>    var a uint64 = 0  &#47;&#47; a has type uint64, value 0<br />
+    a := uint64(0)    &#47;&#47; equivalent; uses a "conversion"<br />
+    i := 0x1234       &#47;&#47; i gets default type: int<br />
+    var j int = 1e6   &#47;&#47; legal - 1000000 is representable in an int<br />
+    x := 1.5          &#47;&#47; a float<br />
+    i3div2 := 3&#47;2     &#47;&#47; integer division - result is 1<br />
+    f3div2 := 3.&#47;2.   &#47;&#47; floating point division - result is 1.5</p>
+<p>Conversions  only work for simple cases such as converting```ints```of one sign or size to another, and between```ints```and```floats```, plus a few other simple cases. There are no automatic numeric  conversions of any kind in Go, other than that of making constants have concrete size and type when assigned to a variable.</p>
+<p>## An  I&#47;O Package</p>
+<p>Next we'll look at a simple package for doing file I&#47;O with the usual sort of open&#47;close&#47;read&#47;write interface. Here's the  start of```file.go```:</p>
+<p>    05    package file</p>
+<p>    07    import  (<br />
+    08        "os";<br />
+    09        "syscall";<br />
+    10    )</p>
+<p>    12    type File  struct {<br />
+    13        fd      int;    &#47;&#47; file descriptor number<br />
+    14        name    string; &#47;&#47; file name at Open time<br />
+    15    }</p>
+<p>The first few lines declare the name of the package&mdash;```file```&mdash;and then import two packages. The```os```package hides the differences between various operating systems to give a consistent view of files and so on; here we're going to use its error handling utilities and reproduce the rudiments of its file I&#47;O.</p>
+<p>The other item is the low-level, external```syscall```package, which provides a primitive interface to the underlying operating system's calls.</p>
+<p>Next is a type definition: the```type```keyword introduces a type declaration, in this case a data structure called```File```. To make things a little more interesting, our```File```includes the name of the file that the file descriptor refers to.</p>
+<p>Because```File```starts with a capital letter, the type is available outside the package, that is, by users of the package. In Go the rule about visibility of information is simple: if a name (of a top-level type, function, method, constant or variable, or of a structure field or method) is capitalized, users of the package may see it. Otherwise, the name and hence the thing being named is visible only inside the package in which it is declared. This is more than a convention; the rule is enforced by the compiler. In Go, the term for publicly visible names is ''exported''.</p>
+<p>In the case of```File```, all its fields are lower case and so invisible to users, but we will soon give it some exported, upper-case methods.</p>
+<p>First, though, here is a factory to create a```File```:</p>
+<p>    17    func newFile(fd int, name string) *File {<br />
+    18        if fd < 0 {<br />
+    19            return nil<br />
+    20        }<br />
+    21        return &File{fd, name}<br />
+    22    }</p>
+<p>This returns a pointer to a new```File```structure with the file descriptor and name filled in. This code uses Go's notion of a ''composite literal'', analogous to the ones used to build maps and arrays, to construct a new heap-allocated object. We could write</p>
+<p>    n := new(File);<br />
+    n.fd = fd;<br />
+    n.name = name;<br />
+    return n</p>
+<p>but for simple structures like```File```it's easier to return the address of a nonce composite literal, as is done here on line 21.</p>
+<p>We can use the factory to construct some familiar, exported variables of type```*File```:</p>
+<p>    24    var (<br />
+    25        Stdin  = newFile(0, "&#47;dev&#47;stdin");<br />
+    26        Stdout = newFile(1, "&#47;dev&#47;stdout");<br />
+    27        Stderr = newFile(2, "&#47;dev&#47;stderr");<br />
+    28    )</p>
+<p>The```newFile```function was not exported because it's internal. The proper, exported factory to use is```Open```:</p>
+<p>    30    func Open(name string, mode int, perm int) (file *File, err os.Error) {<br />
+    31        r, e := syscall.Open(name, mode, perm);<br />
+    32        if e != 0 {<br />
+    33            err = os.Errno(e);<br />
+    34        }<br />
+    35        return newFile(r, name), err<br />
+    36    }</p>
+<p>There are a number of new things in these few lines. First,```Open```returns multiple values, a```File```and an error (more about errors in a moment). We declare the multi-value return as a parenthesized list of declarations; syntactically they look just like a second parameter list. The function```syscall.Open```also has a multi-value return, which we can grab with the multi-variable declaration on line 31; it declares```r```and```e```to hold the two values, both of type```int```(although you'd have to look at the```syscall```package to see that). Finally, line 35 returns two values: a pointer to the new```File```and the error. If```syscall.Open```fails, the file descriptor```r```will be negative and```NewFile```will return```nil```.</p>
+<p>About those errors: The```os```library includes a general notion of an error. It's a good idea to use its facility in your own interfaces, as we do here, for consistent error handling throughout Go code. In```Open```we use a conversion to translate Unix's integer```errno```value into the integer type```os.Errno```, which implements```os.Error```.</p>
+<p>Now that we can build```Files```, we can write methods for them. To declare a method of a type, we define a function to have an explicit receiver of that type, placed in parentheses before the function name. Here are some methods for```*File```, each of which declares a receiver variable```file```.</p>
+<p>    38    func (file *File) Close() os.Error {<br />
+    39        if file == nil {<br />
+    40            return os.EINVAL<br />
+    41        }<br />
+    42        e := syscall.Close(file.fd);<br />
+    43        file.fd = -1;  &#47;&#47; so it can't be closed again<br />
+    44        if e != 0 {<br />
+    45            return os.Errno(e);<br />
+    46        }<br />
+    47        return nil<br />
+    48    }<br />
+    50    func  (file *File) Read(b []byte) (ret int, err os.Error) {<br />
+    51        if file  == nil {<br />
+    52            return -1, os.EINVAL </p>
+<p>    53        }<br />
+    54        r, e  := syscall.Read(file.fd, b);<br />
+    55        if e != 0 {<br />
+    56            err =  os.Errno(e);<br />
+    57        }<br />
+    58        return int(r), err<br />
+    59    }</p>
+<p>    61    func  (file *File) Write(b []byte) (ret int, err os.Error) {<br />
+    62        if  file == nil {<br />
+    63            return -1, os.EINVAL </p>
+<p>    64        }<br />
+    65        r, e := syscall.Write(file.fd, b);<br />
+    66        if e != 0 {<br />
+    67            err = os.Errno(e);<br />
+    68        }<br />
+    69        return int(r),  err<br />
+    70    }</p>
+<p>    72    func (file *File) String() string {<br />
+    73        return file.name<br />
+    74    }</p>
+<p>There is no implicit```this```and the receiver variable must be used to access members of the structure. Methods are not declared within the```struct```declaration itself. The```struct```declaration defines only data members. In fact, methods can be created for almost any type you name, such as an integer or array, not just for```structs```. We'll see an example with arrays later.</p>
+<p>The```String```method is so called because of a printing convention we'll describe later.</p>
+<p>The methods use the public variable```os.EINVAL```to return the (```os.Error```version of the) Unix error code```EINVAL```. The```os```library defines a standard set of such error values.</p>
+<p>We can now use our new package:</p>
+<p>    05    package main<br />
+    07    import  (<br />
+    08        ".&#47;file";<br />
+    09        "fmt";<br />
+    10        "os";<br />
+    11    )</p>
+<p>    13    func  main() {<br />
+    14        hello := []byte{'h', 'e', 'l', 'l', 'o', ',', ' ',  'w', 'o', 'r', 'l', 'd', 'n'};<br />
+    15        file.Stdout.Write(hello);<br />
+    16        file, err := file.Open("&#47;does&#47;not&#47;exist",  0,  0);<br />
+    17        if file == nil {<br />
+    18            fmt.Printf("can't open file;  err=%sn",  err.String());<br />
+    19            os.Exit(1);<br />
+    20        }<br />
+    21    }</p>
+<p>The ''```.&#47;```'' in the import of ''```.&#47;file```'' tells the compiler to use our own package rather than something from the directory of installed packages.</p>
+<p>Finally we can run the program:</p>
+<p>    % helloworld3<br />
+    hello, world<br />
+    can't open file; err=No such file or directory<br />
+    %</p>
+<p>## Rotting cats</p>
+<p>Building on the```file```package, here's a simple version of the Unix utility```cat(1)```,```progs&#47;cat.go```:</p>
+<p>    05    package main</p>
+<p>    07    import (<br />
+    08        ".&#47;file"<br />
+    09        "flag"<br />
+    10        "fmt"<br />
+    11        "os"<br />
+    12    )</p>
+<p>    14    func cat(f *file.File) {<br />
+    15        const NBUF = 512<br />
+    16        var buf [NBUF]byte<br />
+    17        for {<br />
+    18            switch nr, er := f.Read(&buf); true {<br />
+    19            case nr < 0:<br />
+    20                fmt.Fprintf(os.Stderr, "cat: error reading from %s: %s\n", f.String(), er.String())<br />
+    21                os.Exit(1)<br />
+    22            case nr == 0:  &#47;&#47; EOF<br />
+    23                return<br />
+    24            case nr > 0:<br />
+    25                if nw, ew := file.Stdout.Write(buf[0:nr]); nw != nr {<br />
+    26                    fmt.Fprintf(os.Stderr, "cat: error writing from %s: %s\n", f.String(), ew.String())<br />
+    27                }<br />
+    28            }<br />
+    29        }<br />
+    30    }</p>
+<p>    32    func main() {<br />
+    33        flag.Parse()   &#47;&#47; Scans the arg list and sets up flags<br />
+    34        if flag.NArg() == 0 {<br />
+    35            cat(file.Stdin)<br />
+    36        }<br />
+    37        for i := 0; i < flag.NArg(); i++ {<br />
+    38            f, err := file.Open(flag.Arg(i), 0, 0)<br />
+    39            if f == nil {<br />
+    40                fmt.Fprintf(os.Stderr, "cat: can't open %s: error %s\n", flag.Arg(i), err)<br />
+    41                os.Exit(1)<br />
+    42            }<br />
+    43            cat(f)<br />
+    44            f.Close()<br />
+    45        }<br />
+    46    }</p>
+<p>By now this should be easy to follow, but the```switch```statement introduces some new features. Like a```for```loop, an```if```or```switch```can include an initialization statement. The```switch```on line 18 uses one to create variables```nr```and```er```to hold the return values from```f.Read()```. (The```if```on line 25 has the same idea.) The```switch```statement is general: it evaluates the cases from top to bottom looking for the first case that matches the value; the case expressions don't need to be constants or even integers, as long as they all have the same type.</p>
+<p>Since the```switch```value is just```true```, we could leave it off&mdash;as is also the situation in a```for```statement, a missing value means```true```. In fact, such a```switch```is a form of```if-else```chain. While we're here, it should be mentioned that in```switch```statements each```case```has an implicit```break```.</p>
+<p>Line 25 calls```Write()```by slicing the incoming buffer, which is itself a slice. Slices provide the standard Go way to handle I&#47;O buffers.</p>
+<p>Now let's make a variant of```cat```that optionally does```rot13```on its input. It's easy to do by just processing the bytes, but instead we will exploit Go's notion of an**interface**.</p>
+<p>The```cat()```subroutine uses only two methods of```f```:```Read()```and```String()```, so let's start by defining an interface that has exactly those two methods. Here is code from```progs&#47;cat_rot13.go```:</p>
+<p>    26    type reader interface {<br />
+    27        Read(b []byte) (ret int, err os.Error);<br />
+    28        String() string;<br />
+    29    }</p>
+<p>Any type that has the two methods of```reader```&mdash;regardless of whatever other methods the type may also have&mdash;is said to**implement**the interface. Since```file.File```implements these methods, it implements the```reader```interface. We could tweak the```cat```subroutine to accept a```reader```instead of a```*file.File```and it would work just fine, but let's embellish a little first by writing a second type that implements```reader```, one that wraps an existing```reader```and does```rot13```on the data. To do this, we just define the type and implement the methods and  with no other bookkeeping, we have a second implementation of the```reader```interface.</p>
+<p>    31    type rotate13 struct {<br />
+    32        source    reader<br />
+    33    }</p>
+<p>    35    func newRotate13(source reader) *rotate13 {<br />
+    36        return &rotate13{source}<br />
+    37    }</p>
+<p>    39    func (r13 *rotate13) Read(b []byte) (ret int, err os.Error) {<br />
+    40        r, e := r13.source.Read(b)<br />
+    41        for i := 0; i < r; i++ {<br />
+    42            b[i] = rot13(b[i])<br />
+    43        }<br />
+    44        return r, e<br />
+    45    }</p>
+<p>    47    func (r13 *rotate13) String() string {<br />
+    48        return r13.source.String()<br />
+    49    }<br />
+    50    &#47;&#47; end of rotate13 implementation</p>
+<p>(The```rot13```function called on line 42 is trivial and not worth reproducing here.)</p>
+<p>To use the new feature, we define a flag:</p>
+<p>    14    var rot13Flag = flag.Bool("rot13", false, "rot13 the input")</p>
+<p>and use it from within a mostly unchanged```cat()```function:</p>
+<p>    52    func cat(r reader) {<br />
+    53        const NBUF = 512<br />
+    54        var buf [NBUF]byte</p>
+<p>    56        if *rot13Flag {<br />
+    57            r = newRotate13(r)<br />
+    58        }<br />
+    59        for {<br />
+    60            switch nr, er := r.Read(&buf); {<br />
+    61            case nr < 0:<br />
+    62                fmt.Fprintf(os.Stderr, "cat: error reading from %s: %s\n", r.String(), er.String())<br />
+    63                os.Exit(1)<br />
+    64            case nr == 0:  &#47;&#47; EOF<br />
+    65                return<br />
+    66            case nr > 0:<br />
+    67                nw, ew := file.Stdout.Write(buf[0:nr])<br />
+    68                if nw != nr {<br />
+    69                    fmt.Fprintf(os.Stderr, "cat: error writing from %s: %s\n", r.String(), ew.String())<br />
+    70                }<br />
+    71            }<br />
+    72        }<br />
+    73    }</p>
+<p>(We could also do the wrapping in```main```and leave```cat()```mostly alone, except for changing the type of the argument; consider that an exercise.) Lines 56 through 58 set it all up: If the```rot13```flag is true, wrap the```reader```we received into a```rotate13```and proceed. Note that the interface variables are values, not pointers: the argument is of type```reader```, not```*reader```, even though under the covers it holds a pointer to a```struct```.</p>
+<p>Here it is in action:</p>
+<p>    % echo abcdefghijklmnopqrstuvwxyz | .&#47;cat<br />
+    abcdefghijklmnopqrstuvwxyz<br />
+    % echo abcdefghijklmnopqrstuvwxyz | .&#47;cat --rot13<br />
+    nopqrstuvwxyzabcdefghijklm<br />
+    %</p>
+<p>Fans of dependency injection may take cheer from how easily interfaces allow us to substitute the implementation of a file descriptor.</p>
+<p>Interfaces are a distinctive feature of Go. An interface is implemented by a type if the type implements all the methods declared in the interface. This means that a type may implement an arbitrary number of different interfaces. There is no type hierarchy; things can be much more**ad hoc**, as we saw with```rot13```. The type```file.File```implements```reader```; it could also implement a```writer```, or any other interface built from its methods that fits the current situation. Consider the**empty interface**</p>
+<p>    type Empty interface {}</p>
+<p>**Every**type implements the empty interface, which makes it useful for things like containers.</p>
+<p>## Sorting</p>
+<p>Interfaces provide a simple form of polymorphism. They completely separate the definition of what an object does from how it does it, allowing distinct implementations to be represented at different times by the same interface variable.</p>
+<p>As an example, consider this simple sort algorithm taken from```progs&#47;sort.go```:</p>
+<p>    13    func Sort(data Interface) {<br />
+    14        for i := 1; i < data.Len(); i++ {<br />
+    15            for j := i; j > 0 && data.Less(j, j-1); j-- {<br />
+    16                data.Swap(j, j-1)<br />
+    17            }<br />
+    18        }<br />
+    19    }</p>
+<p>The code needs only three methods, which we wrap into sort's```Interface```:</p>
+<p>    07    type Interface interface {<br />
+    08        Len() int;<br />
+    09        Less(i, j int) bool;<br />
+    10        Swap(i, j int);<br />
+    11    }</p>
+<p>We can apply```Sort```to any type that implements```Len```, ```Less```, and```Swap```. The```sort```package includes the necessary methods to allow sorting of arrays of integers, strings, etc.; here's the code for arrays of```int```</p>
+<p>    33    type IntArray []int</p>
+<p>    35    func (p IntArray) Len() int            { return len(p) }<br />
+    36    func (p IntArray) Less(i, j int) bool  { return p[i] < p[j] }<br />
+    37    func (p IntArray) Swap(i, j int)       { p[i], p[j] = p[j], p[i] }</p>
+<p>Here we see methods defined for non-```struct```types. You can define methods for any type you define and name in your package.</p>
+<p>And now a routine to test it out, from```progs&#47;sortmain.go```. This uses a function in the```sort```package, omitted here for brevity, to test that the result is sorted.</p>
+<p>    12    func ints() {<br />
+    13        data := []int{74, 59, 238, -784, 9845, 959, 905, 0, 0, 42, 7586, -5467984, 7586};<br />
+    14        a := sort.IntArray(data);<br />
+    15        sort.Sort(a);<br />
+    16        if !sort.IsSorted(a) {<br />
+    17            panic()<br />
+    18        }<br />
+    19    }</p>
+<p>If we have a new type we want to be able to sort, all we need to do is to implement the three methods for that type, like this:</p>
+<p>    30    type day struct {<br />
+    31        num        int<br />
+    32        shortName  string<br />
+    33        longName   string<br />
+    34    }</p>
+<p>    36    type dayArray struct {<br />
+    37        data []*day<br />
+    38    }</p>
+<p>    40    func (p *dayArray) Len() int            { return len(p.data) }<br />
+    41    func (p *dayArray) Less(i, j int) bool  { return p.data[i].num < p.data[j].num }<br />
+    42    func (p *dayArray) Swap(i, j int)       { p.data[i], p.data[j] = p.data[j], p.data[i] }</p>
+<p>## Printing</p>
+<p>The examples of formatted printing so far have been modest. In this section we'll talk about how formatted I&#47;O can be done well in Go.</p>
+<p>We've seen simple uses of the package```fmt```, which implements```Printf```, ```Fprintf```, and so on. Within the```fmt```package,```Printf```is declared with this signature:</p>
+<p>    Printf(format string, v ...) (n int, errno os.Error)</p>
+<p>That ```...```represents the variadic argument list that in C would be handled using the```stdarg.h```macros but in Go is passed using an empty interface variable (```interface {}```) and then unpacked using the reflection library. It's off topic here but the use of reflection helps explain some of the nice properties of Go's```Printf```, due to the ability of```Printf```to discover the type of its arguments dynamically.</p>
+<p>For example, in C each format must correspond to the type of its argument. It's easier in many cases in Go. Instead of```%llud```you can just say```%d```;```Printf```knows the size and signedness of the integer and can do the right thing for you. The snippet</p>
+<p>    10    var u64 uint64 = 1<<64-1;<br />
+    11    fmt.Printf("%d %dn", u64, int64(u64));</p>
+<p>prints</p>
+<p>     18446744073709551615 -1</p>
+<p>In fact, if you're lazy the format```%v```will print, in a simple appropriate  style, any value, even an array or structure. The output of</p>
+<p>    14    type T struct { a int; b string };<br />
+    15    t := T{77, "Sunset Strip"};<br />
+    16    a := []int{1, 2, 3, 4};<br />
+    17    fmt.Printf("%v %v %vn", u64, t, a);</p>
+<p>is</p>
+<p>    18446744073709551615 {77 Sunset Strip} [1 2 3 4]</p>
+<p>You can drop the formatting altogether if you use```Print```or```Println```instead of```Printf```. Those routines do fully automatic formatting. The```Print```function just prints its elements out using the equivalent of```%v```while```Println```inserts spaces between arguments and adds a newline. The output of each of these two lines is identical to that of the```Printf```call above.</p>
+<p>    18    fmt.Print(u64, " ", t, " ", a, "n");<br />
+    19    fmt.Println(u64, t, a);</p>
+<p>If you have your own type you'd like```Printf```or```Print```to format, just give it a```String()```method that returns a string. The print routines will examine the value to inquire whether it implements the method and if so, use it rather than some other formatting. Here's a simple example.</p>
+<p>    09    type testType struct {<br />
+    10        a int<br />
+    11        b string<br />
+    12    }</p>
+<p>    14    func (t *testType) String() string {<br />
+    15        return fmt.Sprint(t.a) + " " + t.b<br />
+    16    }</p>
+<p>    18    func main() {<br />
+    19        t := &testType{77, "Sunset Strip"}<br />
+    20        fmt.Println(t)<br />
+    21    }</p>
+<p>Since```*testType```has a```String()```method, the default formatter for that type will use it and produce the output</p>
+<p>    77 Sunset Strip</p>
+<p>Observe that the```String()```method calls```Sprint```(the obvious Go variant that returns a string) to do its formatting; special formatters can use the```fmt```library recursively.</p>
+<p>Another feature of```Printf```is that the format```%T```will print a string representation of the type of a value, which can be handy when debugging polymorphic code.</p>
+<p>It's possible to write full custom print formats with flags and precisions and such, but that's getting a little off the main thread so we'll leave it as an exploration exercise.</p>
+<p>You might ask, though, how```Printf```can tell whether a type implements the```String()```method. Actually what it does is ask if the value can be converted to an interface variable that implements the method. Schematically, given a value```v```, it does this:</p>
+<p>    type Stringer interface {<br />
+        String() string<br />
+    }</p>
+<p>    s, ok := v.(Stringer);  &#47;&#47; Test whether v implements "String()"<br />
+    if ok {<br />
+        result = s.String()<br />
+    } else {<br />
+        result = defaultOutput(v)<br />
+    }</p>
+<p>The code uses a ``type assertion'' (```v.(Stringer)```) to test if the value stored in```v```satisfies the```Stringer```interface; if it does,```s```will become an interface variable implementing the method and```ok```will be```true```. We then use the interface variable to call the method. (The ''comma, ok'' pattern is a Go idiom used to test the success of operations such as type conversion, map update, communications, and so on, although this is the only appearance in this tutorial.) If the value does not satisfy the interface,```ok```will be false.</p>
+<p>In this snippet the name```Stringer```follows the convention that we add ''[e]r'' to interfaces describing simple method sets like this.</p>
+<p>One last wrinkle. To complete the suite, besides```Printf```etc. and```Sprintf```etc., there are also```Fprintf```etc. Unlike in C,```Fprintf```'s first argument is not a file. Instead, it is a variable of type```io.Writer```, which is an interface type defined in the```io```library:</p>
+<p>    type Writer interface {<br />
+        Write(p []byte) (n int, err os.Error);<br />
+    }</p>
+<p>(This interface is another conventional name, this time for```Write```; there are also```io.Reader```,```io.ReadWriter```, and so on.) Thus you can call```Fprintf```on any type that implements a standard```Write()```method, not just files but also network channels, buffers, whatever you want.</p>
+<p>## Prime numbers</p>
+<p>Now we come to processes and communication&mdash;concurrent programming. It's a big subject so to be brief we assume some familiarity with the topic.</p>
+<p>A classic program in the style is a prime sieve. (The sieve of Eratosthenes is computationally more efficient than the algorithm presented here, but we are more interested in concurrency than algorithmics at the moment.) It works by taking a stream of all the natural numbers and introducing a sequence of filters, one for each prime, to winnow the multiples of that prime. At each step we have a sequence of filters of the primes so far, and the next number to pop out is the next prime, which triggers the creation of the next filter in the chain.</p>
+<p>Here's a flow diagram; each box represents a filter element whose creation is triggered by the first number that flowed from the elements before it.</p>
+<p>To create a stream of integers, we use a Go**channel**, which, borrowing from CSP's descendants, represents a communications channel that can connect two concurrent computations. In Go, channel variables are references to a run-time object that coordinates the communication; as with maps and slices, use```make```to create a new channel.</p>
+<p>Here is the first function in```progs&#47;sieve.go```:</p>
+<p>    09    &#47;&#47; Send the sequence 2, 3, 4, ... to channel 'ch'.<br />
+    10    func generate(ch chan int) {<br />
+    11        for i := 2; ; i++ {<br />
+    12            ch <- i  &#47;&#47; Send 'i' to channel 'ch'.<br />
+    13        }<br />
+    14    }</p>
+<p>The ```generate```function sends the sequence 2, 3, 4, 5, ... to its argument channel,```ch```, using the binary communications operator```<-```. Channel operations block, so if there's no recipient for the value on```ch```, the send operation will wait until one becomes available.</p>
+<p>The```filter```function has three arguments: an input channel, an output channel, and a prime number. It copies values from the input to the output, discarding anything divisible by the prime. The unary communications operator```<-```(receive) retrieves the next value on the channel.</p>
+<p>    16    &#47;&#47; Copy the values from channel 'in' to channel 'out',<br />
+    17    &#47;&#47; removing those divisible by 'prime'.<br />
+    18    func filter(in, out chan int, prime int) {<br />
+    19        for {<br />
+    20            i := <-in;  &#47;&#47; Receive value of new variable 'i' from 'in'.<br />
+    21            if i % prime != 0 {<br />
+    22                out <- i  &#47;&#47; Send 'i' to channel 'out'.<br />
+    23            }<br />
+    24        }<br />
+    25    }</p>
+<p>The generator and filters execute concurrently. Go has its own model of process&#47;threads&#47;light-weight processes&#47;coroutines, so to avoid notational confusion we call concurrently executing computations in Go**goroutines**. To start a goroutine, invoke the function, prefixing the call with the keyword```go```; this starts the function running in parallel with the current computation but in the same address space:</p>
+<p>    go sum(hugeArray); &#47;&#47; calculate sum in the background</p>
+<p>If you want to know when the calculation is done, pass a channel on which it can report back:</p>
+<p>    ch := make(chan int);<br />
+    go sum(hugeArray, ch);<br />
+    &#47;&#47; ... do something else for a while<br />
+    result := <-ch;  &#47;&#47; wait for, and retrieve, result</p>
+<p>Back to our prime sieve. Here's how the sieve pipeline is stitched together:</p>
+<p>    28    func main() {<br />
+    29        ch := make(chan int);  &#47;&#47; Create a new channel.<br />
+    30        go generate(ch);  &#47;&#47; Start generate() as a goroutine.<br />
+    31        for {<br />
+    32            prime := <-ch;<br />
+    33            fmt.Println(prime);<br />
+    34            ch1 := make(chan int);<br />
+    35            go filter(ch, ch1, prime);<br />
+    36            ch = ch1<br />
+    37        }<br />
+    38    }</p>
+<p>Line 29 creates the initial channel to pass to```generate```, which it then starts up. As each prime pops out of the channel, a new```filter```is added to the pipeline and**its**output becomes the new value of```ch```.</p>
+<p>The sieve program can be tweaked to use a pattern common in this style of programming. Here is a variant version of```generate```, from```progs&#47;sieve1.go```:</p>
+<p>    10    func generate() chan int {<br />
+    11        ch := make(chan int);<br />
+    12        go func(){<br />
+    13            for i := 2; ; i++ {<br />
+    14                ch <- i<br />
+    15            }<br />
+    16        }();<br />
+    17        return ch;<br />
+    18    }</p>
+<p>This version does all the setup internally. It creates the output channel, launches a goroutine running a function literal, and returns the channel to the caller. It is a factory for concurrent execution, starting the goroutine and returning its connection.</p>
+<p>The function literal notation (lines 12-16) allows us to construct an anonymous function and invoke it on the spot. Notice that the local variable```ch```is available to the function literal and lives on even after```generate```returns.</p>
+<p>The same change can be made to```filter```:</p>
+<p>    21    func filter(in chan int, prime int) chan int {<br />
+    22        out := make(chan int);<br />
+    23        go func() {<br />
+    24            for {<br />
+    25                if i := <-in; i % prime != 0 {<br />
+    26                    out <- i<br />
+    27                }<br />
+    28            }<br />
+    29        }();<br />
+    30        return out;<br />
+    31    }</p>
+<p>The ```sieve```function's main loop becomes simpler and clearer as a result, and while we're at it let's turn it into a factory too:</p>
+<p>    33    func sieve() chan int {<br />
+    34        out := make(chan int);<br />
+    35        go func() {<br />
+    36            ch := generate();<br />
+    37            for {<br />
+    38                prime := <-ch;<br />
+    39                out <- prime;<br />
+    40                ch = filter(ch, prime);<br />
+    41            }<br />
+    42        }();<br />
+    43        return out;<br />
+    44    }</p>
+<p>Now```main```'s interface to the prime sieve is a channel of primes:</p>
+<p>    46    func main() {<br />
+    47        primes := sieve();<br />
+    48        for {<br />
+    49            fmt.Println(<-primes);<br />
+    50        }<br />
+    51    }</p>
+<p>## Multiplexing</p>
+<p>With channels, it's possible to serve multiple independent client goroutines without writing an explicit multiplexer. The trick is to send the server a channel in the message, which it will then use to reply to the original sender. A realistic client-server program is a lot of code, so here is a very simple substitute to illustrate the idea. It starts by defining a```request```type, which embeds a channel that will be used for the reply.</p>
+<p>    09    type request struct {<br />
+    10        a, b    int;<br />
+    11        replyc  chan int;<br />
+    12    }</p>
+<p>The server will be trivial: it will do simple binary operations on integers. Here's the code that invokes the operation and responds to the request:</p>
+<p>    14    type binOp func(a, b int) int</p>
+<p>    16    func run(op binOp, req *request) {<br />
+    17        reply := op(req.a, req.b)<br />
+    18        req.replyc <- reply<br />
+    19    }</p>
+<p>Line 18 defines the name```binOp```to be a function taking two integers and returning a third.</p>
+<p>The```server```routine loops forever, receiving requests and, to avoid blocking due to a long-running operation, starting a goroutine to do the actual work.</p>
+<p>    21    func server(op binOp, service chan *request) {<br />
+    22        for {<br />
+    23            req := <-service;<br />
+    24            go run(op, req);  &#47;&#47; don't wait for it<br />
+    25        }<br />
+    26    }</p>
+<p>We construct a server in a familiar way, starting it and returning a channel connected to it:</p>
+<p>    28    func startServer(op binOp) chan *request {<br />
+    29        req := make(chan *request);<br />
+    30        go server(op, req);<br />
+    31        return req;<br />
+    32    }</p>
+<p>Here's a simple test. It starts a server with an addition operator and sends out```N```requests without waiting for the replies. Only after all the requests are sent does it check the results.</p>
+<p>    34    func main() {<br />
+    35        adder := startServer(func(a, b int) int { return a + b });<br />
+    36        const N = 100;<br />
+    37        var reqs [N]request;<br />
+    38        for i := 0; i < N; i++ {<br />
+    39            req := &reqs[i];<br />
+    40            req.a = i;<br />
+    41            req.b = i + N;<br />
+    42            req.replyc = make(chan int);<br />
+    43            adder <- req;<br />
+    44        }<br />
+    45        for i := N-1; i >= 0; i-- {   &#47;&#47; doesn't matter what order<br />
+    46            if <-reqs[i].replyc != N + 2*i {<br />
+    47                fmt.Println("fail at", i);<br />
+    48            }<br />
+    49        }<br />
+    50        fmt.Println("done");<br />
+    51    }</p>
+<p>One annoyance with this program is that it doesn't shut down the server cleanly; when```main```returns there are a number of lingering goroutines blocked on communication. To solve this, we can provide a second,```quit```channel to the server:</p>
+<p>    32    func startServer(op binOp) (service chan *request, quit chan bool) {<br />
+    33        service = make(chan *request);<br />
+    34        quit = make(chan bool);<br />
+    35        go server(op, service, quit);<br />
+    36        return service, quit;<br />
+    37    }</p>
+<p>It passes the quit channel to the```server```function, which uses it like this:</p>
+<p>    21    func server(op binOp, service chan *request, quit chan bool) {<br />
+    22        for {<br />
+    23            select {<br />
+    24            case req := <-service:<br />
+    25                go run(op, req);  &#47;&#47; don't wait for it<br />
+    26            case <-quit:<br />
+    27                return;<br />
+    28            }<br />
+    29        }<br />
+    30    }</p>
+<p>Inside ```server```, the```select```statement chooses which of the multiple communications listed by its cases can proceed. If all are blocked, it waits until one can proceed; if multiple can proceed, it chooses one at random. In this instance, the```select```allows the server to honor requests until it receives a quit message, at which point it returns, terminating its execution.</p>
+<p>All that's left is to strobe the```quit```channel at the end of main:</p>
+<p>    42        adder, quit := startServer(func(a, b int) int { return a + b });<br />
+    ...<br />
+    55        quit <- true;</p>
+<p>关于Go编程和并发程序设计还有许多其它的内容，但这份快速入门教程应该已经给你提供了一点基础知识。</p>

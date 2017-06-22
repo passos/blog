@@ -1,0 +1,29 @@
+---
+layout: post
+status: publish
+published: true
+title: 魔兽世界 3.3.5 13930 Trinity 认证补丁
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 518
+wordpress_url: http://log4think.com/?p=518
+date: '2011-06-13 22:09:47 +0800'
+date_gmt: '2011-06-13 12:09:47 +0800'
+categories:
+- WoW&#47;Trinity
+tags:
+- wow
+- Trinity
+comments: []
+---
+<p>2011年6月13日，Trinity官方代码针对WoW客户端3.3.5 13930版本登陆有问题。经过代码跟踪调试，发现需要在认证服务器中加入如下补丁：<br />
+位于文件TrinityCore\src\server\authserver\Authentication\AuthCodes.h</p>
+<pre><code>#define POST_BC_ACCEPTED_CLIENT_BUILD &nbsp; {13930, 12340, 11723, 11403, 11159, 10571, 10505, 10146, 9947, 8606, 0}<br />
+<&#47;code><&#47;pre></p>
+<p>改动之处就是，在这个客户端支持版本号的列表中加入13930。改动之后需要重新编译authserver和worldserver。</p>

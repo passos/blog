@@ -1,0 +1,254 @@
+---
+layout: post
+status: publish
+published: true
+title: ThoughtWorks 的一道笔试题
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 42
+wordpress_url: http://log4think.com/?p=42
+date: '2008-12-11 23:37:38 +0800'
+date_gmt: '2008-12-11 15:37:38 +0800'
+categories:
+- 写代码(coding)
+tags:
+- java
+- thoughtworks
+- interview
+- problem
+comments: []
+---
+<p>PROBLEM ONE: TRAINS</p>
+<p>Problem:  The local commuter railroad services a number of towns in Kiwiland.  Because of monetary concerns, all of the tracks are 'one-way.'  That is, a route from Kaitaia to Invercargill does not imply the existence of a route from Invercargill to Kaitaia.  In fact, even if both of these routes do happen to exist, they are distinct and are not necessarily the same distance!</p>
+<p>The purpose of this problem is to help the railroad provide its customers with information about the routes.  In particular, you will compute the distance along a certain route, the number of different routes between two towns, and the shortest route between two towns.</p>
+<p>Input:  A directed graph where a node represents a town and an edge represents a route between two towns.  The weighting of the edge represents the distance between the two towns.  A given route will never appear more than once, and for a given route, the starting and ending town will not be the same town.</p>
+<p>Output: For test input 1 through 5, if no such route exists, output 'NO SUCH ROUTE'.  Otherwise, follow the route as given; do not make any extra stops!  For example, the first problem means to start at city A, then travel directly to city B (a distance of 5), then directly to city C (a distance of 4).</p>
+<p>1. The distance of the route A-B-C.<br />
+2. The distance of the route A-D.<br />
+3. The distance of the route A-D-C.<br />
+4. The distance of the route A-E-B-C-D.<br />
+5. The distance of the route A-E-D.<br />
+6. The number of trips starting at C and ending at C with a maximum of 3 stops.  In the sample data below, there are two such trips: C-D-C (2 stops). and C-E-B-C (3 stops).<br />
+7. The number of trips starting at A and ending at C with exactly 4 stops.  In the sample data below, there are three such trips: A to C (via B,C,D); A to C (via D,C,D); and A to C (via D,E,B).<br />
+8. The length of the shortest route (in terms of distance to travel) from A to C.<br />
+9. The length of the shortest route (in terms of distance to travel) from B to B.<br />
+10. The number of different routes from C to C with a distance of less than 30.  In the sample data, the trips are: CDC, CEBC, CEBCDC, CDCEBC, CDEBC, CEBCEBC, CEBCEBCEBC.</p>
+<p>Test Input:</p>
+<p>For the test input, the towns are named using the first few letters of the alphabet from A to D.  A route between two towns (A to B) with a distance of 5 is represented as AB5.</p>
+<p>Graph: AB5, BC4, CD8, DC8, DE6, AD5, CE2, EB3, AE7</p>
+<p>Expected Output:</p>
+<p>Output #1: 9<br />
+Output #2: 5<br />
+Output #3: 13<br />
+Output #4: 22<br />
+Output #5: NO SUCH ROUTE<br />
+Output #6: 2<br />
+Output #7: 3<br />
+Output #8: 9<br />
+Output #9: 9<br />
+Output #10: 7<br />
+==========</p>
+<p>用一个带权重的有向图表示节点之间的关系，使用深度优先搜索。</p>
+<p>1-5:</p>
+<pre>
+package com.log4think.code;</p>
+<p>public class TrainMap {</p>
+<p>	public int[][] map = {<br />
+		&#47;&#47;    A   B   C   D   E<br />
+	        {-1,  5, -1,  5,  7},<br />
+	        {-1, -1,  4, -1, -1},<br />
+	        {-1, -1, -1,  8,  2},<br />
+	        {-1, -1,  8, -1,  6},<br />
+	        {-1,  3, -1, -1, -1},<br />
+	};</p>
+<p>	public int getDistance(String path)<br />
+	{<br />
+		int distance = 0;</p>
+<p>		for (int i=0; i
+<path.length()-1; i++) {<br />
+			&#47;&#47; get the node index in map<br />
+			int fromNodeIndex = path.charAt(i) - 'A';<br />
+			int toNodeIndex = path.charAt(i+1) - 'A';</p>
+<p>			&#47;&#47; check the distance of two node in map<br />
+			if (map[fromNodeIndex][toNodeIndex] == -1) {<br />
+				return -1;<br />
+			} else {<br />
+				distance += map[fromNodeIndex][toNodeIndex];<br />
+			}<br />
+		}</p>
+<p>		return distance;<br />
+	}</p>
+<p>	public static void main(String[] args) {<br />
+		TrainMap g = new TrainMap();</p>
+<p>		int distance = g.getDistance("ABC");<br />
+		if (distance > 0)<br />
+			System.out.println(distance);<br />
+		else<br />
+			System.out.println("NO SUCH ROUTE");</p>
+<p>&#47;&#47;		g.findDistance("AD");<br />
+&#47;&#47;		g.findDistance("ADC");<br />
+&#47;&#47;		g.findDistance("AEBCD");<br />
+&#47;&#47;		g.findDistance("AED");<br />
+	}<br />
+}<br />
+<&#47;pre></p>
+<p>6:</p>
+<pre>
+public class TrainMap {</p>
+<p>    public int[][] map = {<br />
+            {-1, 5, -1, 5, 7},<br />
+            {-1, -1, 4, -1, -1},<br />
+            {-1, -1, -1, 8, 2},<br />
+            {-1, -1, 8, -1, 6},<br />
+            {-1, 3, -1, -1, -1},<br />
+    };</p>
+<p>	&#47;&#47; used to record the trip round count<br />
+	public int tripCount = 0;</p>
+<p>	&#47;***<br />
+	 *<br />
+	 * @param end , the end node. if we reach it we found a path<br />
+	 * @param path , the current path we already have<br />
+	 * @param maxLength, the maximum stops<br />
+	 *&#47;<br />
+	public void dfs(String end, String path, int maxLength)<br />
+	{<br />
+		&#47;&#47; this is for debug and trace<br />
+		&#47;&#47; System.out.println(";; " + path);</p>
+<p>		&#47;&#47; if the path reach the maximum stops, then cancel search<br />
+	    if (path.length() - 1 > maxLength) return;</p>
+<p>	    &#47;&#47; check if we have reach the "end" node<br />
+	    if ( path.length() > 1 && path.endsWith(end) ) {<br />
+	        System.out.println(path + ", " + tripCount);<br />
+	        tripCount ++;<br />
+	    }</p>
+<p>	    &#47;&#47; caculate the lastest node index in map<br />
+	    char lastChar = path.charAt(path.length()-1);<br />
+	    int lastNodeIndex = lastChar - 'A';</p>
+<p>	    &#47;&#47; loop all nodes in map which connected to lastNode, and try it<br />
+	    for ( int i=0; i<br />
+<map[lastNodeIndex].length; i++ )<br />
+	    {<br />
+	    	&#47;&#47; convert index to node name<br />
+	        char newChar = (char)(i + 'A');<br />
+	        &#47;&#47; try and search<br />
+	        if ( map[lastNodeIndex][i] > 0) {<br />
+	            dfs(end, path + newChar, maxLength);<br />
+	        }<br />
+	    }<br />
+	}</p>
+<p>    public static void main(String[] args) {<br />
+        TrainMap g = new TrainMap();</p>
+<p>        g.dfs("C", "C", 3);<br />
+    }<br />
+}<br />
+<&#47;pre></p>
+<p>7:</p>
+<pre>
+public class TrainMap {</p>
+<p>    public int[][] map = {<br />
+            { -1, 5, -1, 5, 7 },<br />
+            { -1, -1, 4, -1, -1 },<br />
+            { -1, -1, -1, 8, 2 },<br />
+            { -1, -1, 8, -1, 6 },<br />
+            { -1, 3, -1, -1, -1 }<br />
+    };</p>
+<p>    public void bfs(String start, String end, int hops) {<br />
+        String lastRoute = start;</p>
+<p>        for (int hop = 0; hop < hops; hop++) {<br />
+            String route = "";<br />
+            for (int i = 0; i < lastRoute.length(); i++) {<br />
+                char c = lastRoute.charAt(i);<br />
+                int id = c - 'A';</p>
+<p>                for (int j = 0; j < map[id].length; j++) {<br />
+                    if (map[id][j] > 0)<br />
+                        route = route + (char) (j + 'A');<br />
+                }<br />
+            }<br />
+&#47;&#47;          System.out.println(lastRoute);<br />
+            lastRoute = route;<br />
+        }</p>
+<p>&#47;&#47;      System.out.println(lastRoute);<br />
+        System.out.println(lastRoute.split(end).length - 1);<br />
+    }</p>
+<p>    public static void main(String[] args) {<br />
+        TrainMap g = new TrainMap();</p>
+<p>        g.bfs("A", "C", 4);<br />
+    }<br />
+}<br />
+<&#47;pre></p>
+<p>8&#47;9:</p>
+<pre>
+public class TrainMap {</p>
+<p>    public int[][] map = {<br />
+            {-1, 5, -1, 5, 7},<br />
+            {-1, -1, 4, -1, -1},<br />
+            {-1, -1, -1, 8, 2},<br />
+            {-1, -1, 8, -1, 6},<br />
+            {-1, 3, -1, -1, -1},<br />
+    };</p>
+<p>    public void dfs(String end, String path, int cost) {<br />
+        if (path.endsWith(end) && cost < bestCost && cost > 0) {<br />
+            bestPath = path;<br />
+            bestCost = cost;<br />
+            return;<br />
+        }<br />
+        char lastChar = path.charAt(path.length() - 1);<br />
+        int lastNodeIndex = lastChar - 'A';</p>
+<p>        for (int i = 0; i < map[lastNodeIndex].length; i++) {<br />
+            char newChar = (char) (i + 'A');<br />
+            int newCost = map[lastNodeIndex][i];<br />
+            if (newCost > 0) {<br />
+                if (path.indexOf(newChar) > 0)<br />
+                    continue;<br />
+                dfs(end, path + newChar, cost + newCost);<br />
+            }<br />
+        }<br />
+    }</p>
+<p>    public String bestPath = "";<br />
+    public int bestCost = Integer.MAX_VALUE;</p>
+<p>    public static void main(String[] args) {<br />
+        TrainMap g = new TrainMap();</p>
+<p>        g.dfs("C", "A", 0); &#47;&#47; 8<br />
+&#47;&#47;      g.dfs("B", "B", 0); &#47;&#47; 9</p>
+<p>        System.out.println("Best Path: " + g.bestPath + "\nCost: " + g.bestCost);<br />
+    }<br />
+}<br />
+<&#47;pre></p>
+<p>10:</p>
+<pre>
+public class TrainMap {</p>
+<p>    public int[][] map = {<br />
+            {-1, 5, -1, 5, 7},<br />
+            {-1, -1, 4, -1, -1},<br />
+            {-1, -1, -1, 8, 2},<br />
+            {-1, -1, 8, -1, 6},<br />
+            {-1, 3, -1, -1, -1},<br />
+    };</p>
+<p>    public void dfs(String end, String path, int cost) {<br />
+        if (cost >= 30)<br />
+            return;</p>
+<p>        if (cost > 0 && path.endsWith(end)) {<br />
+            System.out.println(path + ", " + cost);<br />
+        }</p>
+<p>        char lastChar = path.charAt(path.length() - 1);<br />
+        int lastNodeIndex = lastChar - 'A';</p>
+<p>        for (int i = 0; i < map[lastNodeIndex].length; i++) {<br />
+            char newChar = (char) (i + 'A');<br />
+            int newCost = map[lastNodeIndex][i];<br />
+            if (newCost > 0) {<br />
+                dfs(end, path + newChar, cost + newCost);<br />
+            }<br />
+        }<br />
+    }</p>
+<p>    public static void main(String[] args) {<br />
+        TrainMap g = new TrainMap();</p>
+<p>        g.dfs("C", "C", 0);<br />
+    }<br />
+}<br />
+<&#47;pre></p>

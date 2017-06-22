@@ -1,0 +1,100 @@
+---
+layout: post
+status: publish
+published: true
+title: 解决搜狗输入法Ubuntu 14.04下黑块状态条
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+excerpt: 搜狗的Linux输入法正式版发布之时，恰好Ubuntu 14.04 LTS也刚刚发布正式版。尝试安装搜狗的Linux输入法之后，出现了一个小小的问题：输入法状态条是一个黑色块。原因是默认环境下不支持compositor窗口管理器，无法处理半透明窗口的效果，于是就只能显示一个黑色块。解决办法是安装Compton来支持半透明效果。
+wordpress_id: 972
+wordpress_url: http://log4think.com/?p=972
+date: '2014-04-23 19:07:59 +0800'
+date_gmt: '2014-04-23 09:07:59 +0800'
+categories:
+- 系统(System)
+tags:
+- i3
+- Linux
+- Compton
+comments: []
+---
+<p>搜狗的Linux输入法正式版发布之时，恰好Ubuntu 14.04 LTS也刚刚发布正式版。尝试安装搜狗的Linux输入法之后，出现了一个小小的问题：输入法状态条是一个黑色块。</p>
+<p>我的Linux桌面用的是i3平铺式桌面管理器，多显示器环境下非常好用，[强烈推荐](http:&#47;&#47;i3wm.org)。除此之外，GUI底层用的是KDE。</p>
+<p>做了一番功课之后，结果发现因为搜狗要支持皮肤，所以那个状态条是半透明状态的。而我目前的默认环境下不支持compositor窗口管理器，无法处理半透明窗口的效果，于是就只能显示一个黑色块。</p>
+<p>解决办法是安装[Compton](https:&#47;&#47;github.com&#47;chjj&#47;compton)，以支持窗口的半透明效果。Ubuntu默认情况下没有可用的APT源，有两种办法安装：一个是从源码编译（不赘述），另外一个是使用一个第三方的源。</p>
+<p>## 安装第三方源并安装compton</p>
+<p>    sudo apt-add-repository ppa:richardgv&#47;compton<br />
+    sudo apt-get update && sudo apt-get install compton</p>
+<p>## 配置compton<br />
+编辑文件 ```~&#47;.compton.conf```，输入如下内容</p>
+<p>    backend = "glx";<br />
+    paint-on-overlay = true;<br />
+    glx-no-stencil = true;<br />
+    glx-no-rebind-pixmap = true;<br />
+    vsync = "opengl-swc"; </p>
+<p>    # These are important. The first one enables the opengl backend. The last one<br />
+    # is the vsync method. Depending on the driver you might need to use a<br />
+    # different method.<br />
+    # The other options are smaller performance tweaks that work well in most<br />
+    # cases.<br />
+    # You can find the rest of the options here:<br />
+    # https:&#47;&#47;github.com&#47;chjj&#47;compton&#47;wiki&#47;perf-guide, and here:<br />
+    # https:&#47;&#47;github.com&#47;chjj&#47;compton&#47;wiki&#47;vsync-guide</p>
+<p>    # Shadow<br />
+    shadow = false;          # Enabled client-side shadows on windows.<br />
+    no-dock-shadow = true;      # Avoid drawing shadows on dock&#47;panel windows.<br />
+    no-dnd-shadow = true;       # Don't draw shadows on DND windows.<br />
+    clear-shadow = true;        # Zero the part of the shadow's mask behind the window (experimental).<br />
+    shadow-radius = 7;      # The blur radius for shadows. (default 12)<br />
+    shadow-offset-x = -7;       # The left offset for shadows. (default -15)<br />
+    shadow-offset-y = -7;       # The top offset for shadows. (default -15)<br />
+    shadow-exclude = [<br />
+        "! name~=''",<br />
+        "n:e:Notification",<br />
+        "n:e:Plank",<br />
+        "n:e:Docky",<br />
+        "g:e:Synapse",<br />
+        "g:e:Kupfer",<br />
+        "g:e:Conky",<br />
+        "n:w:*Firefox*",<br />
+        "n:w:*Chrome*",<br />
+        "n:w:*Chromium*",<br />
+        "class_g ?= 'Notify-osd'",<br />
+        "class_g ?= 'Cairo-dock'",<br />
+        "class_g ?= 'Xfce4-notifyd'",<br />
+        "class_g ?= 'Xfce4-power-manager'"<br />
+    ];                                                                                                                                                                                                            </p>
+<p>    # The shadow exclude options are helpful if you have shadows enabled. Due to<br />
+    # the way compton draws its shadows, certain applications will have visual<br />
+    # glitches<br />
+    # (most applications are fine, only apps that do weird things with xshapes or<br />
+    # argb are affected).<br />
+    # This list includes all the affected apps I found in my testing. The "!<br />
+    # name~=''" part excludes shadows on any "Unknown" windows, this prevents a<br />
+    # visual glitch with the XFWM alt tab switcher.                                                                                                                                                               </p>
+<p>    # Fading<br />
+    fading = true; # Fade windows during opacity changes.<br />
+    fade-delta = 4; # The time between steps in a fade in milliseconds. (default 10).<br />
+    fade-in-step = 0.03; # Opacity change between steps while fading in. (default 0.028).<br />
+    fade-out-step = 0.03; # Opacity change between steps while fading out. (default 0.03).<br />
+    #no-fading-openclose = true; # Fade windows in&#47;out when opening&#47;closing</p>
+<p>    detect-client-opacity = true; # This prevents opacity being ignored for some apps. For example without this enabled my xfce4-notifyd is 100% opacity no matter what.</p>
+<p>    # Window type settings<br />
+    wintypes:<br />
+    {<br />
+      tooltip = { fade = true; shadow = false; };<br />
+    };</p>
+<p>重点是其中 shadow 一项的值设置为 false 。</p>
+<p>## 自启动<br />
+最后，修改i3配置文件 ```~&#47;.i3&#47;config```，在最后加入下面的代码，实现自动启动compton和搜狗输入法</p>
+<p>    # auto start commands<br />
+    exec --no-startup-id fcitx -r<br />
+    exec --no-startup-id fcitx-qimpanel<br />
+    exec --no-startup-id compton -b</p>
+<p>安装完成了，系统也顺便带了半透明和淡入淡出效果。</p>

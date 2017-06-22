@@ -1,0 +1,72 @@
+---
+layout: post
+status: publish
+published: true
+title: vi cheatsheet
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 734
+wordpress_url: http://log4think.com/?p=734
+date: '2006-06-12 18:32:02 +0800'
+date_gmt: '2006-06-12 08:32:02 +0800'
+categories:
+- 系统(System)
+tags:
+- vi
+comments: []
+---
+<p>编辑:<br />
+把下一行挪到当前行的末尾，在Windows下很简单&mdash;&mdash;在当前行末尾按del或者在下一行的开头按bs就可以了，<br />
+而在vi里面是要在当前行任意位置按J（大写的J，也就是Shift+j）</p>
+<p>快速保存退出：<br />
+很多人习惯用标准的 :wq！ 保存退出，不过我更喜欢按Shift+z+z，也就是ZZ，一样的。</p>
+<p>查找:<br />
+&#47;sometext 从当前向后找<br />
+?sometext 从当前向前找 (这两个命令执行后 按n继续向后找 按N继续向前找)<br />
+:g&#47;sometext&#47;</p>
+<p>前者直接定位到单词上，后者仅仅是定位到那一行上</p>
+<p>ex命令扩展：</p>
+<p>vi下有一个ex命令模式可以用ex命令来进行快速编辑操作，基本的模式是：</p>
+<p>[范围] g[lobal] &#47;模式&#47; [ex命令] 在指定的&ldquo;范围&rdquo;内，对匹配&ldquo;模式&rdquo;的行执行&ldquo;ex命令&rdquo;</p>
+<p>[范围] v[lobal] &#47;模式&#47; [ex命令] 在指定的&ldquo;范围&rdquo;内，对不匹配&ldquo;模式&rdquo;的行执行&ldquo;ex命令&rdquo;</p>
+<p>如果没有指定&ldquo;范围&rdquo;，则默认为全部。<br />
+如果没有制定&ldquo;ex命令&rdquo;，则默认是显示结果。<br />
+&ldquo;模式&rdquo;即正则表达式。<br />
+&ldquo;ex命令&rdquo;在编辑方面，大致有 m（移动）s（替换）d（删除）</p>
+<p>例子：</p>
+<p>:g&#47;^&#47;m0 会从第一行开始把每一行移动到第一行之后，结果就是所有行逆序反转</p>
+<p>:g&#47;127.0.0.1&#47;s&#47;http&#47;ftp&#47;g     对包含127.0.0.1的行，将http替换为ftp</p>
+<p>:g&#47;127.0.0.1&#47;s&#47;^&#47;\t&#47;g         对包含127.0.0.1的行，每行之前加一个制表符（TAB）</p>
+<p>:g&#47;127.0.0.1&#47;d                删除包含127.0.0.1的行</p>
+<p>如果命令的内容中包含&#47;字符，可以选择转义 \&#47; 或者把ex的命令分隔符&#47;换成别的字符（例如~@#$%等）。例如要把包含&#47;home的行中的&#47;simon删除：</p>
+<p>:g&#47;\&#47;home&#47; s&#47;\&#47;simon&#47;&#47;g  用转义字符输入&#47;</p>
+<p>:g#&#47;home#s#&#47;simon##g 用#作为命令分隔符，则字符&#47;可以直接使用了</p>
+<p>查找-替换:<br />
+通常情况下查找替换的ex命令是<br />
+:%s&#47;oldtext&#47;newtext&#47;g</p>
+<p>下面是对这个命令的解释<br />
+: 表示进入ex的命令模式<br />
+% 是表示ex命令的source的范围. 后面的命令在该范围内执行. 该范围有多种表达方式:<br />
+    % 表示全文<br />
+    $ 表示到行尾<br />
+    . 表示当前行<br />
+    x,y 表示从第x行到y行, 例如 10,20s&#47;oldtext&#47;newtext&#47;<br />
+    此外还可以用其它的ex搜索命令表达范围<br />
+    g&#47;sometext&#47; 表示包含sometext的行</p>
+<p>s 是ex的替换命令<br />
+&#47;...&#47;...&#47; 表示"搜索-替换"的内容.<br />
+g 是表示替换所有. 默认s只执行一次</p>
+<p>-= 例子1 =-<br />
+:10,20s&#47;^&#47;    &#47;    把第10到20行的前面加上4个空格<br />
+可以分解为  :  10,20  s  &#47;^&#47;    &#47;</p>
+<p>-= 例子2 =-<br />
+:g&#47;small&#47;s&#47;^&#47;#&#47;   把所有包含small的行都加上注释#<br />
+g&#47;small&#47; 查找包含small的行<br />
+&#47;^&#47; 表示第一个非空白字符<br />
+可以分解为 g&#47;small&#47;   s   &#47;^&#47;#&#47;</p>

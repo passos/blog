@@ -1,0 +1,65 @@
+---
+layout: post
+status: publish
+published: true
+title: ant 中通过重新定义  project.all.jars.path 在 classpath 中引入外部 jar 文件
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+excerpt: 在Android开发中，除了通常在Eclipse中的编译方法之外，有的时候为了进行持续集成，可能还需要用ant进行自动化编译。Android SDK本身已经提供了默认的ant编译脚本，就在每个工程下的build.xml中，其中引用了SDK的编译脚本${sdk_dir}/tools/ant/build.xml
+  。 通常情况下，在工程根目录下直接执行 ant debug 即可进行一次正常的build。默认的classpath会包括libs目录下的所有jar文件。但是如果工程中使用了USER
+  LIBRARY，或者引用了外部的jar文件，那么在编译中就可能会遇到问题，因为这些jar文件不会被自动包含在classpath中，这时就要扩展ant的path变量，把自己的jar文件加入到classpath中。
+wordpress_id: 560
+wordpress_url: http://log4think.com/?p=560
+date: '2013-01-21 12:54:12 +0800'
+date_gmt: '2013-01-21 01:54:12 +0800'
+categories:
+- Android
+- Java
+tags:
+- java
+- Android
+- ant
+comments: []
+---
+<p>在Android开发中，除了通常在Eclipse中的编译方法之外，有的时候为了进行持续集成，可能还需要用ant进行自动化编译。Android SDK本身已经提供了默认的ant编译脚本，就在每个工程下的build.xml中，其中引用了SDK的编译脚本${sdk_dir}&#47;tools&#47;ant&#47;build.xml 。 通常情况下，在工程根目录下直接执行 ant debug 即可进行一次正常的build。默认的classpath会包括libs目录下的所有jar文件。但是如果工程中使用了USER LIBRARY，或者引用了外部的jar文件，那么在编译中就可能会遇到问题，因为这些jar文件不会被自动包含在classpath中，这时就要扩展ant的path变量，把自己的jar文件加入到classpath中。<&#47;p></p>
+<p>通过察看sdk提供的build.xml编译脚本，可以发现javac使用的classpath定义如下：<&#47;p></p>
+<pre><code>
+<path id="project.javac.classpath">
+<path refid="project.all.jars.path"><&#47;path></p>
+<path refid="tested.project.classpath"><&#47;path><br />
+<&#47;path></p>
+<p><javac encoding="${java.encoding}"<br />
+        source="${java.source}" target="${java.target}"<br />
+        debug="true" extdirs="" includeantruntime="false"<br />
+        destdir="${out.classes.absolute.dir}"<br />
+        bootclasspathref="project.target.class.path"<br />
+        verbose="${verbose}"<br />
+        classpathref="project.javac.classpath"<br />
+        fork="${need.javac.fork}"><br />
+    <src path="${source.absolute.dir}"><&#47;src><br />
+    <src path="${gen.absolute.dir}"><&#47;src><br />
+    <compilerarg line="${java.compilerargs}"><&#47;compilerarg><br />
+<&#47;javac><br />
+<&#47;code><&#47;pre></p>
+<p>其中 project.all.jars.path 包含了所有的jar文件，我们可以通过在工程目录下的buildxml中重新定义这个变量来引入其他的jar文件。例如在我的工程中，引用了ormlite这个ORM库，为了能够在开发中使用&ldquo;attach source&rdquo;察看源码，该jar文件不能放在libs目录中，因为Eclipse不允许对libs目录中的jar文件&ldquo;attach source&rdquo;。因此我将此文件放到了libs&#47;ormlite目录中，为了能够将这两个jar文件加入到classpath中，就要重新定义 project.all.jars.path 这个元素。<&#47;p></p>
+<p>基本思路是，重新定义-pre-compile这个target，在其中重新定义 project.all.jars.path 的值。<&#47;p></p>
+<pre><code><target name="-pre-compile"><br />
+    <echo message="JARPATH=${toString:project.all.jars.path}"><&#47;echo></p>
+<property name="ormlite.dir" value="${jar.libs.dir}&#47;ormlite"><&#47;property></p>
+<path id="ormlite.lib">
+<path path="${toString:project.all.jars.path}"><&#47;path></p>
+<pathelement location="${ormlite.dir}&#47;ormlite-android-4.41.jar"><&#47;pathelement></p>
+<pathelement location="${ormlite.dir}&#47;ormlite-core-4.41.jar"><&#47;pathelement><br />
+    <&#47;path></p>
+<path id="project.all.jars.path">
+<path refid="ormlite.lib"><&#47;path><br />
+    <&#47;path></p>
+<p>    <echo message="JARPATH=${toString:project.all.jars.path}"><&#47;echo><br />
+<&#47;target><br />
+<&#47;code><&#47;pre></p>

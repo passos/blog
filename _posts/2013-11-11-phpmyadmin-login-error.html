@@ -1,0 +1,47 @@
+---
+layout: post
+status: publish
+published: true
+title: phpMyAdmin login error to remote server
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 769
+wordpress_url: http://log4think.com/?p=769
+date: '2013-11-11 16:20:07 +0800'
+date_gmt: '2013-11-11 05:20:07 +0800'
+categories:
+- 系统(System)
+tags: []
+comments: []
+---
+<p>I have a fresh install of Ubuntu 13.10 and phpMyAdmin version 4:4.0.6-1 . I add a remote server in config.inc.php for multiple server management. But phpMyAdmin failed to login to remote server. </p>
+<p>there are following error logs in `&#47;var&#47;log&#47;apache2&#47;error.log`</p>
+<p>    PHP Fatal error:  Call to a member function getPresence() on a non-object in &#47;usr&#47;share&#47;phpmyadmin&#47;libraries&#47;navigation&#47;NavigationTree.class.php on line 1046</p>
+<p>The code of `NavigationTree.class.php` at 1046 are</p>
+<p>    1039         } else if (($node->type == Node::CONTAINER<br />
+    1040             && (   $node->real_name == 'tables'<br />
+    1041                 || $node->real_name == 'views'<br />
+    1042                 || $node->real_name == 'functions'<br />
+    1043                 || $node->real_name == 'procedures'<br />
+    1044                 || $node->real_name == 'events')<br />
+    1045             )<br />
+    1046             && $node->realParent()->getPresence($node->real_name) >= (int)$GLOBALS['cfg']    ['NavigationTreeDisplayItemFilterMinimum']<br />
+    1047         ) {</p>
+<p>I am not sure the root cause of this issue. But I can fix this error by adding a check for if statment</p>
+<p>    1039         } else if (($node->type == Node::CONTAINER<br />
+    1040             && (   $node->realParent )<br />
+    1041             && (   $node->real_name == 'tables'<br />
+    1042                 || $node->real_name == 'views'<br />
+    1043                 || $node->real_name == 'functions'<br />
+    1044                 || $node->real_name == 'procedures'<br />
+    1045                 || $node->real_name == 'events')<br />
+    1046             )<br />
+    1047             && $node->realParent()->getPresence($node->real_name) >= (int)$GLOBALS['cfg']['NavigationTreeDisplayItemFilterMinimum']<br />
+    1048         ) {</p>
+<p>That's it.</p>

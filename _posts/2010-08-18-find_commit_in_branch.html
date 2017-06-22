@@ -1,0 +1,34 @@
+---
+layout: post
+status: publish
+published: true
+title: Git中判断一个commit是否在某个branch中
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 141
+wordpress_url: http://log4think.com/?p=141
+date: '2010-08-18 17:08:16 +0800'
+date_gmt: '2010-08-18 07:08:16 +0800'
+categories:
+- 系统(System)
+tags:
+- Git
+comments: []
+---
+<p>方法1：</p>
+<pre><code>git branch --contains commit<&#47;code><&#47;pre><br />
+方法2：查找reflog</p>
+<pre><code>git reflog show --all | grep a871742<&#47;code><&#47;pre><br />
+会有类似如下的结果：</p>
+<pre><code>a871742 refs&#47;heads&#47;completion@{0}: commit (amend): mpc-completion: total rewrite<&#47;code><&#47;pre><br />
+completion就是所在的branch<br />
+注：</p>
+<pre><code>git reflog show<&#47;code><&#47;pre><br />
+等价于</p>
+<pre><code>git log -g --abbrev-commit --pretty=oneline<&#47;code><&#47;pre></p>

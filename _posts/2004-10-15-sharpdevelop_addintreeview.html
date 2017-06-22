@@ -1,0 +1,252 @@
+---
+layout: post
+status: publish
+published: true
+title: SharpDevelop的AddInTree View 插件
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 679
+wordpress_url: http://log4think.com/?p=679
+date: '2004-10-15 09:25:35 +0800'
+date_gmt: '2004-10-14 23:25:35 +0800'
+categories:
+- Others
+tags:
+- sharpdevelop
+- C
+comments: []
+---
+<p>自从SharpDevelop 源码分析的系列文章发出来之后，很多朋友给了不错的评价，在这里先感谢各位朋友的鼓励。另外，评论中有位朋友想看看我在文章中提到的AddInTreeView插件，其实这个是个很简单的小东西，因此单独发在这里了。(好像没有找到那里能上传文件，因此直接贴代码了) </p>
+<p># AddinTreeViewCommand.cs #</p>
+<p>	&#47;*<br />
+	 * Created by SharpDevelop.<br />
+	 * User: Administrator<br />
+	 * Date: 2004-10-4<br />
+	 * Time: 4:12<br />
+	 *<br />
+	 * To change this template use Tools | Options | Coding | Edit Standard Headers.<br />
+	 *&#47;<br />
+	using System;<br />
+	using System.Windows.Forms;<br />
+	using System.CodeDom.Compiler; </p>
+<p>	using ICSharpCode.SharpDevelop.Gui;<br />
+	using ICSharpCode.SharpDevelop.Gui.Pads;<br />
+	using ICSharpCode.Core.AddIns;<br />
+	using ICSharpCode.Core.AddIns.Codons;<br />
+	using ICSharpCode.SharpDevelop.Services; </p>
+<p>	namespace Addins.AddinTreeView<br />
+	{<br />
+	    &#47;&#47;&#47;<br />
+<summary>
+	    &#47;&#47;&#47; Description of MyClass.<br />
+	    &#47;&#47;&#47; <&#47;summary><br />
+	    public class AddinTreeViewCommand: AbstractMenuCommand<br />
+	    {<br />
+	        public override void Run()<br />
+	        {<br />
+	            using (AddinTreeViewContent viewContent = new AddinTreeViewContent() )<br />
+	            {<br />
+	                WorkbenchSingleton.Workbench.ShowView(viewContent);<br />
+	            }<br />
+	        }<br />
+	    } </p>
+<p>	    public class AddinTreeViewContent: AbstractViewContent<br />
+	    {<br />
+	        AddinTreeViewControl viewControl = new AddinTreeViewControl(); </p>
+<p>	        public override Control Control<br />
+	        {<br />
+	            get<br />
+	            {<br />
+	                return viewControl;<br />
+	            }<br />
+	        } </p>
+<p>	        public override bool IsDirty<br />
+	        {<br />
+	            get<br />
+	            {<br />
+	                return false;<br />
+	            }<br />
+	            set<br />
+	            {<br />
+	            }<br />
+	        } </p>
+<p>	        IWorkbenchWindow workbenchWindow;<br />
+	        public override IWorkbenchWindow WorkbenchWindow<br />
+	        {<br />
+	            get<br />
+	            {<br />
+	                return workbenchWindow;<br />
+	            }<br />
+	            set<br />
+	            {<br />
+	                workbenchWindow = value;<br />
+	                workbenchWindow.Title = "AddInTreeView";<br />
+	            }<br />
+	        } </p>
+<p>	        public AddinTreeViewContent()<br />
+	        {<br />
+	            TitleName = "AddinTree View";<br />
+	        } </p>
+<p>	        public override bool IsViewOnly<br />
+	        {<br />
+	            get<br />
+	            {<br />
+	                return true;<br />
+	            }<br />
+	        }<br />
+	        public void SaveFile(){}<br />
+	        public void Undo(){}<br />
+	        public void Redo(){}<br />
+	        public override void Save(){}<br />
+	        public override void Save(string filename){}<br />
+	        public override void Load(string filename)<br />
+	        {<br />
+	        } </p>
+<p>	        public override string TabPageText<br />
+	        {<br />
+	            get<br />
+	            {<br />
+	                return "AddInTree";<br />
+	            }<br />
+	        } </p>
+<p>	    }<br />
+	} </p>
+<p># AddinTreeViewControl.cs #</p>
+<p>	using System;<br />
+	using System.Collections;<br />
+	using System.ComponentModel;<br />
+	using System.Drawing;<br />
+	using System.Data;<br />
+	using System.Windows.Forms; </p>
+<p>	using ICSharpCode.SharpDevelop.Gui;<br />
+	using ICSharpCode.Core.AddIns;<br />
+	using ICSharpCode.Core.AddIns.Codons; </p>
+<p>	namespace Addins.AddinTreeView<br />
+	{<br />
+	    &#47;&#47;&#47;<br />
+<summary>
+	    &#47;&#47;&#47; AddinTreeViewControl 的摘要说明。<br />
+	    &#47;&#47;&#47; <&#47;summary><br />
+	    public class AddinTreeViewControl : System.Windows.Forms.UserControl<br />
+	    {<br />
+	        private System.Windows.Forms.ColumnHeader chName;<br />
+	        private System.Windows.Forms.ListView lvAddin;<br />
+	        private System.Windows.Forms.ColumnHeader chInfo;<br />
+	        private System.Windows.Forms.CheckBox cbShowAddinInfo;<br />
+	        private System.Windows.Forms.Splitter splitter2;<br />
+	        private System.Windows.Forms.ListView lvDebug;<br />
+	        private System.Windows.Forms.Splitter splitter1;<br />
+	        private System.Windows.Forms.TreeView tvAddin;<br />
+	        private System.Windows.Forms.ColumnHeader chValue;<br />
+	        &#47;&#47;&#47;<br />
+<summary>
+	        &#47;&#47;&#47; 必需的设计器变量。<br />
+	        &#47;&#47;&#47; <&#47;summary><br />
+	        private System.ComponentModel.Container components = null; </p>
+<p>	        public AddinTreeViewControl()<br />
+	        {<br />
+	            &#47;&#47; 该调用是 Windows.Forms 窗体设计器所必需的。<br />
+	            InitializeComponent(); </p>
+<p>	            &#47;&#47; TODO: 在 InitializeComponent 调用后添加任何初始化<br />
+	            InitAddinTreeView();<br />
+	        } </p>
+<p>	        &#47;&#47;&#47;<br />
+<summary>
+	        &#47;&#47;&#47; 清理所有正在使用的资源。<br />
+	        &#47;&#47;&#47; <&#47;summary><br />
+	        protected override void Dispose( bool disposing )<br />
+	        {<br />
+	            if( disposing )<br />
+	            {<br />
+	                if(components != null)<br />
+	                {<br />
+	                    components.Dispose();<br />
+	                }<br />
+	            }<br />
+	            base.Dispose( disposing );<br />
+	        } </p>
+<p>	        组件设计器生成的代码 </p>
+<p>	        void InitAddinTreeView()<br />
+	        {<br />
+	            TreeNode pathNode = tvAddin.Nodes.Add("AddinRoot"); </p>
+<p>	            tvAddin.BeginUpdate();<br />
+	            try<br />
+	            {<br />
+	                foreach ( AddIn addIn in AddInTreeSingleton.AddInTree.AddIns)<br />
+	                {<br />
+	                    foreach ( ICSharpCode.Core.AddIns.AddIn.Extension e in addIn.Extensions)<br />
+	                    {<br />
+	                        string [] paths = e.Path.Split('&#47;');<br />
+	                        pathNode = tvAddin.Nodes[0]; </p>
+<p>	                        for ( int i=0; i<paths.Length; i++)<br />
+	                        {<br />
+	                            bool foundPath = false; </p>
+<p>	                            if ( paths[i] == "" )<br />
+	                            {<br />
+	                                pathNode = tvAddin.Nodes[0];<br />
+	                                continue;<br />
+	                            }                         </p>
+<p>	                            for ( int j=0; j<pathNode.Nodes.Count; j++)<br />
+	                            {<br />
+	                                if ( pathNode.Nodes[j].Text == paths[i] )<br />
+	                                {<br />
+	                                    pathNode = pathNode.Nodes[j];<br />
+	                                    foundPath = true;<br />
+	                                    break;<br />
+	                                }<br />
+	                            } </p>
+<p>	                            if ( !foundPath )<br />
+	                            {<br />
+	                                pathNode = pathNode.Nodes.Add( paths[i] );<br />
+	                                pathNode.Tag = new ArrayList();<br />
+	                                &#47;&#47;lvDebug.Items.Add("Add " + e.Path + " ---- " + paths[i]);<br />
+	                            }<br />
+	                        } </p>
+<p>	                        (pathNode.Tag as ArrayList).Add(e);<br />
+	                    }<br />
+	                }<br />
+	            }<br />
+	            finally<br />
+	            {<br />
+	                tvAddin.EndUpdate();<br />
+	            }<br />
+	        } </p>
+<p>	        void AddInfo(string Name, string Value)<br />
+	        {<br />
+	            lvAddin.Items.Add(Name).SubItems.Add(Value);<br />
+	        } </p>
+<p>	        private void tvAddin_AfterSelect(object sender, System.Windows.Forms.TreeViewEventArgs e)<br />
+	        {<br />
+	            lvAddin.Items.Clear(); </p>
+<p>	            if ( e.Node.Tag != null )<br />
+	            {<br />
+	                foreach (AddIn.Extension et in (e.Node.Tag as ArrayList))<br />
+	                {<br />
+	                    AddInfo("Extension", et.ToString()); </p>
+<p>	                    foreach ( ICodon codon in et.CodonCollection)<br />
+	                    {<br />
+	                        AddInfo("  ┏ Codon ID", codon.ID);<br />
+	                        AddInfo("  ┣ Codon Name", codon.Name);<br />
+	                        AddInfo("  ┗ Codon Class", codon.Class); </p>
+<p>	                        if ( cbShowAddinInfo.Checked )<br />
+	                        {<br />
+	                            AddInfo("      ┣ Addin Name", codon.AddIn.Name);<br />
+	                            AddInfo("      ┗ Addin FileName", codon.AddIn.FileName); </p>
+<p>	                            foreach ( ICSharpCode.Core.AddIns.AddIn.Extension ex in codon.AddIn.Extensions)<br />
+	                            {<br />
+	                                AddInfo("          ┣ Addin Extensions", ex.Path);<br />
+	                            }<br />
+	                            AddInfo("          ┗━━━━━━━━━", "");<br />
+	                        }<br />
+	                    }<br />
+	                }<br />
+	            }<br />
+	        }<br />
+	    }<br />
+	} </p>

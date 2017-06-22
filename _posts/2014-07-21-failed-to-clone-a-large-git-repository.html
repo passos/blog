@@ -1,0 +1,35 @@
+---
+layout: post
+status: publish
+published: true
+title: 'Failed to clone a large git repository: The remote end hung up unexpectedly'
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 1009
+wordpress_url: http://log4think.com/?p=1009
+date: '2014-07-21 16:36:41 +0800'
+date_gmt: '2014-07-21 06:36:41 +0800'
+categories:
+- 工具(Tool)
+tags: []
+comments: []
+---
+<p>When git clone a large repository sometimes it give you the error message like this:</p>
+<p>    $ git clone ssh:&#47;&#47;xxx@xxx:29418&#47;xxx<br />
+    Cloning into 'xxx'...<br />
+    remote: Counting objects: 356213, done<br />
+    remote: Finding sources: 100% (356213&#47;356213)<br />
+    Corrupted MAC on input. (277847&#47;356213), 123.59 MiB | 3.86 MiB&#47;s<br />
+    Finished discarding for xxx<br />
+    fatal: The remote end hung up unexpectedly<br />
+    fatal: early EOF<br />
+    fatal: index-pack failed</p>
+<p>If you got this error message, you might want to try run the following command to fix it</p>
+<p>    git config --global http.postBuffer 524288000<br />
+    git config --global --add core.compression -1</p>

@@ -1,0 +1,156 @@
+---
+layout: post
+status: publish
+published: true
+title: '"adb shell dumpsys" parameter list'
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+excerpt: '"adb shell dumpsys" parameter list'
+wordpress_id: 594
+wordpress_url: http://log4think.com/?p=594
+date: '2013-02-20 13:25:19 +0800'
+date_gmt: '2013-02-20 02:25:19 +0800'
+categories:
+- Android
+tags:
+- Android
+- adb
+comments: []
+---
+<p>Android开发中，常常可以用```adb shell dumpsys```这条命令来dump出系统运行时的状态信息，例如可以这样来察看某个应用的内存使用信息</p>
+<p>    adb shell dumpsys meminfo com.google.android.apps.maps</p>
+<p>察看TaskStack</p>
+<p>    adb shell dumpsys activity activities</p>
+<p>察看Alarm列表</p>
+<p>    adb shell dumpsys alarm</p>
+<p>如果在linux下配合 watch 命令更是可以自动刷新实时察看。这条命令的用法是 ```adb shell dumpsys SERVICE [option] [process name]```，可用的SERVICE列表：</p>
+<p>    $ adb shell dumpsys | grep 'DUMP OF SERVICE' | awk '{print $4}' | tr -d ':'<br />
+    CustomFrequencyManagerService<br />
+    DirEncryptService<br />
+    SYSSCOPE<br />
+    SecTVOutService<br />
+    SurfaceFlinger<br />
+    TvoutService_C<br />
+    accessibility<br />
+    account<br />
+    activity<br />
+    alarm<br />
+    apn_settings_policy<br />
+    application_policy<br />
+    apppermission_control_policy<br />
+    appwidget<br />
+    audio<br />
+    backup<br />
+    battery<br />
+    batteryinfo<br />
+    bluetooth<br />
+    bluetooth_a2dp<br />
+    bluetooth_avrcp<br />
+    bluetooth_policy<br />
+    browser_policy<br />
+    clipboard<br />
+    clipboardEx<br />
+    com.orange.authentication.simcard<br />
+    commontime_management<br />
+    connectivity<br />
+    content<br />
+    country_detector<br />
+    cpuinfo<br />
+    date_time_policy<br />
+    dbinfo<br />
+    device_info<br />
+    device_policy<br />
+    devicestoragemonitor<br />
+    diskstats<br />
+    drm.drmManager<br />
+    dropbox<br />
+    eas_account_policy<br />
+    edm_proxy<br />
+    email_account_policy<br />
+    email_policy<br />
+    enterprise_policy<br />
+    enterprise_vpn_policy<br />
+    entropy<br />
+    firewall_policy<br />
+    gfxinfo<br />
+    hardware<br />
+    input<br />
+    input_method<br />
+    iphonesubinfo<br />
+    isms<br />
+    kioskmode<br />
+    location<br />
+    location_policy<br />
+    lock_settings<br />
+    mdm.remotedesktop<br />
+    media.audio_flinger<br />
+    media.audio_policy<br />
+    media.camera<br />
+    media.player<br />
+    meminfo<br />
+    mini_mode_app_manager<br />
+    misc_policy<br />
+    motion_recognition<br />
+    mount<br />
+    netpolicy<br />
+    netstats<br />
+    network_management<br />
+    nfc<br />
+    notification<br />
+    package<br />
+    password_policy<br />
+    permission<br />
+    phone<br />
+    phone_restriction_policy<br />
+    phoneext<br />
+    power<br />
+    remoteinjection<br />
+    restriction_policy<br />
+    roaming_policy<br />
+    samplingprofiler<br />
+    samsung.facedetection_service<br />
+    scheduling_policy<br />
+    search<br />
+    security_policy<br />
+    sensorservice<br />
+    serial<br />
+    servicediscovery<br />
+    simphonebook<br />
+    sip<br />
+    statusbar<br />
+    telephony.registry<br />
+    textservices<br />
+    throttle<br />
+    tvoutservice<br />
+    uimode<br />
+    updatelock<br />
+    usagestats<br />
+    usb<br />
+    vibrator<br />
+    voip<br />
+    vpn_policy<br />
+    wallpaper<br />
+    wfd<br />
+    wifi<br />
+    wifi_policy<br />
+    wifip2p<br />
+    window</p>
+<p>此外，某些服务还支持如下参数</p>
+<p>    ACTIVITY MANAGER PENDING INTENTS (adb shell dumpsys activity intents)<br />
+    ACTIVITY MANAGER BROADCAST STATE (adb shell dumpsys activity broadcasts)<br />
+    ACTIVITY MANAGER CONTENT PROVIDERS (adb shell dumpsys activity providers)<br />
+    ACTIVITY MANAGER SERVICES (adb shell dumpsys activity services)<br />
+    ACTIVITY MANAGER ACTIVITIES (adb shell dumpsys activity activities)<br />
+    ACTIVITY MANAGER RUNNING PROCESSES (adb shell dumpsys activity processes)<br />
+    INPUT MANAGER (adb shell dumpsys input)<br />
+    WINDOW MANAGER LAST ANR (adb shell dumpsys window lastanr)<br />
+    WINDOW MANAGER POLICY STATE (adb shell dumpsys window policy)<br />
+    WINDOW MANAGER SESSIONS (adb shell dumpsys window sessions)<br />
+    WINDOW MANAGER TOKENS (adb shell dumpsys window tokens)<br />
+    WINDOW MANAGER WINDOWS (adb shell dumpsys window windows)</p>

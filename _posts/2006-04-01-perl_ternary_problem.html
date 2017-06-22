@@ -1,0 +1,70 @@
+---
+layout: post
+status: publish
+published: true
+title: 'Perl中不寻常的 ?: 运算符'
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 726
+wordpress_url: http://log4think.com/?p=726
+date: '2006-04-01 15:37:47 +0800'
+date_gmt: '2006-04-01 04:37:47 +0800'
+categories:
+- Perl
+tags:
+- perl
+comments: []
+---
+<p>前几天写一个perl的脚本 在:?运算符上遇到了一个很诡异的问题</p>
+<p>	$data->{$id}->{'total'} ?<br />
+	    $data->{$id}->{'ratio'} = sprintf("%.2f%%", 100 * $data->{$id}->{'succ'} &#47; $data->{$id}->{'total'}) :<br />
+	    $data->{$id}->{'ratio'} = 'N&#47;A';</p>
+<p>我的本意是 如果 ```$data->{$id}->{'total'}``` 未定义则不计算ratio,把ratio赋值为N&#47;A. 这条语句等同于</p>
+<p>	if ( $data->{$id}->{'total'} ) {<br />
+	    $data->{$id}->{'ratio'} = sprintf("%.2f%%", 100 * $data->{$id}->{'succ'} &#47; $data->{$id}->{'total'});<br />
+	} else {<br />
+	    $data->{$id}->{'ratio'} = 'N&#47;A';</p>
+<p>可奇怪的是，当无论total是否有定义 ratio的结果居然都是N&#47;A. 可后面if else的语句是没有问题的，真的是让我百思不得其解。跑去查Perl的文档，其中对于?:的运算符号的解释是 </p>
+<p>_Ternary ``?:'' is the conditional operator, just as in C. It works much like an if-then-else. If the argument before the ? is true, the argument before the : is returned, otherwise the argument after the : is returned._</p>
+<p>貌似是return the argument，于是乎脑子里突然闪过一个念头, 在前后都加上了括号...</p>
+<p>	$data->{$id}->{'total'} ?<br />
+	    ( $data->{$id}->{'ratio'} = sprintf("%.2f%%", 100 * $data->{$id}->{'succ'} &#47; $data->{$id}->{'total'}) ) :<br />
+	    ( $data->{$id}->{'ratio'} = 'N&#47;A' );</p>
+<p>...居然就对了。既然是return the argument，我就又换了一种方式：</p>
+<p>	$data->{$id}->{'ratio'} = $data->{$id}->{'total'} ?<br />
+	    sprintf("%.2f%%", 100 * $data->{$id}->{'succ'} &#47; $data->{$id}->{'total'}) :<br />
+	    'N&#47;A';</p>
+<p>虽然后面两种方式都可以理解，那确实是一种正确的做法。 但为什么第一种方式的结果不对呢？我又写了一个简单的小程序测试</p>
+<p>	#!&#47;usr&#47;bin&#47;perl</p>
+<p>	use strict;</p>
+<p>	my $total=1;<br />
+	my $rval;</p>
+<p>	############################`<br />
+	$total ?<br />
+	    $rval = $total :<br />
+	    $rval = 'N&#47;A';</p>
+<p>	print $rval, "\n";</p>
+<p>	############################<br />
+	$total ?<br />
+	    ( $rval = $total ) :<br />
+	    ( $rval = 'N&#47;A' );</p>
+<p>	print $rval, "\n";</p>
+<p>	############################<br />
+	$rval = $total ? $total : 'N&#47;A';</p>
+<p>	print $rval, "\n";</p>
+<p>	############################<br />
+	if ($total) {<br />
+	    $rval = $total;<br />
+	} else {<br />
+	    $rval = 'N&#47;A';<br />
+	}</p>
+<p>	print $rval;</p>
+<p>运行的结果显示, 无论第5行给$total赋什么值...包括1, "abc", "true", undef 等,执行的结果第一个print打印出来的都是N&#47;A。 难道 $total? 不等价于 if ($total) 吗? </p>
+<p>后来偶然的一次机会在PerlChina上问过此问题，才发现原来C和Perl对于```:?```和```=```的优先级定义是不同的。在C中，```=```的优先级高于```:?```，而Perl中则正好相反。这直接导致了第一种情况对于语句的解释顺序与C截然不同。对于```x ? a = 1 : a = 2;```，你期望解释为```x ? (a = 1) : (a = 2);```，实际却解释成了另外一个形式。</p>
+<p>因此教训就是，文档在解释 ?: 的时候说的很清楚 ```If the argument before the ? is true, the argument before the : is returned```，重点在*return*。所以，:? 里面应该尽量写&ldquo;表达式&rdquo;，而非&ldquo;语句&rdquo;。非要用语句，那么请加括号避免优先级问题。 </p>

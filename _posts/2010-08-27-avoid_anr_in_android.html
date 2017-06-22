@@ -1,0 +1,134 @@
+---
+layout: post
+status: publish
+published: true
+title: 避免Android开发中的ANR
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 210
+wordpress_url: http://log4think.com/?p=210
+date: '2010-08-27 18:03:45 +0800'
+date_gmt: '2010-08-27 08:03:45 +0800'
+categories:
+- 译(translation)
+- Android
+tags:
+- Android
+- ANR
+- AsyncTask
+- Intent Service
+comments: []
+---
+<p>via:&nbsp; <a href="http:&#47;&#47;code.google.com&#47;events&#47;io&#47;2010&#47;sessions&#47;writing-zippy-android-apps.html" target="_blank">Writing Zippy Android Apps<&#47;a></p>
+<h2>ANR是什么<&#47;h2><br />
+<a href="http:&#47;&#47;log4think.com&#47;wordpress&#47;wp-content&#47;uploads&#47;2010&#47;08&#47;ANR.jpg"><img class="alignnone size-full wp-image-212" title="ANR" src="http:&#47;&#47;log4think.com&#47;wordpress&#47;wp-content&#47;uploads&#47;2010&#47;08&#47;ANR.jpg" alt="" width="324" height="488" &#47;><&#47;a></p>
+<p>ANRs (&ldquo;Application Not Responding&rdquo;)，意思是&rdquo;应用没有响应&ldquo;。</p>
+<p>在如下情况下，Android会报出ANR错误：</p>
+<p>&ndash; 主线程 (&ldquo;事件处理线程&rdquo; &#47; &ldquo;UI线程&rdquo;) 在5秒内没有响应输入事件</p>
+<p>&ndash; BroadcastReceiver 没有在10秒内完成返回</p>
+<p>通常情况下，下面这些做法会导致ANR</p>
+<p>1、在主线程内进行网络操作</p>
+<p>2、在主线程内进行一些缓慢的磁盘操作（例如执行没有优化过的SQL查询）</p>
+<p>应用应该在5秒或者10秒内响应，否则用户会觉得&ldquo;这个应用很垃圾&rdquo;&ldquo;烂&rdquo;&ldquo;慢&rdquo;...等等</p>
+<h2>一些数据(Nexus One为例)<&#47;h2><br />
+&bull; ~0.04 ms &ndash; 通过管道进程从A->B再从B->A写一个字节；或者（从dalvik）读一个简单的&#47;proc文件</p>
+<p>&bull; ~0.12 ms &ndash; 由A->B 再由B->A 进行一次Binder的RPC调用</p>
+<p>&bull; ~5-25 ms &ndash; 从未缓冲的flash<br />
+&bull; ~5-200+(!) ms &ndash; 向为缓冲的flash中写点东西（下面是具体数据）</p>
+<p>&bull;&nbsp;&nbsp;&nbsp; 16 ms &ndash; 60fps的视频中的一帧</p>
+<p>&bull;&nbsp;&nbsp;&nbsp; 41 ms &ndash; 24fps的视频中的一帧</p>
+<p>&bull; 100-200 ms &ndash; human perception of slow action</p>
+<p>&bull; 108&#47;350&#47;500&#47;800 ms &ndash; 3G网络上ping（可变）</p>
+<p>&bull; ~1-6+ seconds &ndash; 通过HTTP在3G网络上获取6k的数据</p>
+<h2>android.os.AsyncTask<&#47;h2><br />
+AsyncTask 可以与UI线程很方便的配合，这个类可以在后台执行一些操作，并在执行结束的时候将结果发布到UI线程中去，并且无需使用线程或handler来控制。</p>
+<p>例子:</p>
+<pre>private class DownloadFilesTask extends AsyncTask {<br />
+	protected Long doInBackground(URL... urls) {  &#47;&#47; on some background thread<br />
+			int count = urls.length;<br />
+			long totalSize = 0;<br />
+			for (int i = 0; i < count; i++) {<br />
+				totalSize += Downloader.downloadFile(urls[i]);<br />
+				publishProgress((int) ((i &#47; (float) count) * 100));<br />
+			}</p>
+<p>			return totalSize;<br />
+&nbsp; &nbsp;  	} </p>
+<p>		protected void onProgressUpdate(Integer... progress) {  &#47;&#47; on UI thread!<br />
+		setProgressPercent(progress[0]);<br />
+	} </p>
+<p>	protected void onPostExecute(Long result) {  &#47;&#47; on UI thread!<br />
+		showDialog("Downloaded " + result + " bytes");<br />
+	}<br />
+} </p>
+<p>new DownloadFilesTask().execute(url1, url2, url3);  &#47;&#47; call from UI thread!<br />
+private boolean handleWebSearchRequest(final ContentResolver cr) {<br />
+            ...<br />
+	new AsyncTask() {<br />
+	    protected Void doInBackground(Void... unused) {<br />
+	    	Browser.updateVisitedHistory(cr, newUrl, false);<br />
+	    	Browser.addSearchUrl(cr, newUrl);<br />
+	    	return null;<br />
+	    } </p>
+<p>	}.execute()<br />
+            ...<br />
+    return true; </p>
+<p>}<&#47;pre></p>
+<h2>AsyncTask要点<&#47;h2><br />
+1、必须从主线程调用，或者线程中有Handler或Looper。</p>
+<p>2、不要在一个可能会被另外一个AsyncTask调用的库里面使用AsyncTask（AsyncTask是不可重入的）</p>
+<p>3、如果从一个activity中调用，activity进程可能会在AsyncTask结束前退出，例如：</p>
+<ul>
+<li> 用户退出了activity<&#47;li>
+<li>系统内存不足<&#47;li>
+<li>系统暂存了activity的状态留待后用<&#47;li>
+<li>系统干掉了你的线程<&#47;li><br />
+<&#47;ul><br />
+如果AsyncTask中的工作很重要，应该使用......</p>
+<h2>android.app.IntentService<&#47;h2><br />
+Eclair(2.0, 2.1)文档中说：</p>
+<p>&ldquo;An abstract Service that serializes the handling of the Intents passed upon service start and handles them on a handler&nbsp; thread.&nbsp; To use this class extend it and implement onHandleIntent(Intent). The Service will automatically be&nbsp; stopped when the last enqueued Intent is handled.&rdquo;<br />
+有点令人困惑，因此...几乎没人用</p>
+<p>Froyo (2.2) 的文档, 又澄清了一下....</p>
+<p>android.app.IntentService</p>
+<p>&ldquo;IntentService is a base class for Services that handle asynchronous requests (expressed as Intents) on demand. Clients send requests&nbsp; through startService(Intent) calls; the service is started as needed, handles each Intent in turn using a worker thread, and stops itself&nbsp; when it runs out of work.</p>
+<p>This 'work queue processor' pattern is commonly used to offload tasks from an application's main thread. The IntentService class exists to&nbsp; simplify this pattern and take care of the mechanics. To use it, extend IntentService and implement onHandleIntent(Intent). IntentService&nbsp; will receive the Intents, launch a worker thread, and stop the service as appropriate.</p>
+<p>All requests are handled on a single worker thread -- they may take as long as necessary (and will not block the application's main loop), but&nbsp; only one request will be processed at a time.&rdquo;</p>
+<h2>IntentService 的好处<&#47;h2></p>
+<ul>
+<li>Acitivity的进程，当处理Intent的时候，会产生一个对应的Service<&#47;li>
+<li>Android的进程处理器现在会尽可能的不kill掉你<&#47;li>
+<li>非常容易使用<&#47;li><br />
+<&#47;ul><br />
+日历中IntentService的应用</p>
+<pre>public class DismissAllAlarmsService extends IntentService {<br />
+	@Override public void onHandleIntent(Intent unusedIntent) {<br />
+		ContentResolver resolver = getContentResolver();<br />
+		...<br />
+		resolver.update(uri, values, selection, null);<br />
+	}<br />
+}<br />
+in AlertReceiver extends BroadcastReceiver, onReceive()：  (main thread)<br />
+    Intent intent = new Intent(context, DismissAllAlarmsService.class);<br />
+    context.startService(intent);<&#47;pre></p>
+<h2>其它技巧<&#47;h2><br />
+1、当启动AsyncTask的时候，立刻disable UI元素（按钮等等）。</p>
+<p>2、显示一些动画，表示在处理中</p>
+<p>3、使用进度条对话框</p>
+<p>4、使用一个定时器作为耗时警告，在AsyncTask开始时启动定时器，在AsyncTask的onPostExecute方法中取消定时器。</p>
+<p>5、当不确定要耗时多久的时候，组合使用上述所有方法</p>
+<h2>总结<&#47;h2></p>
+<ul>
+<li>离开主线程！<&#47;li>
+<li>磁盘和网络操作不是马上就能完的<&#47;li>
+<li>了解sqlite在干嘛<&#47;li>
+<li>进度展示很好<&#47;li><br />
+<&#47;ul><br />
+PS，在视频讲座中，作者还提到，Chrome团队为了避免Jank（响应超时而死掉），几乎所有的功能和任务都会在子线程里面去做。这一点也值得在Android中借鉴。</p>
+<p>刘金雨译:&nbsp; <a href="http:&#47;&#47;log4think.com&#47;avoid_anr_in_android">避免Android开发中的ANR<&#47;a><br />
+全文via:&nbsp; <a href="http:&#47;&#47;code.google.com&#47;events&#47;io&#47;2010&#47;sessions&#47;writing-zippy-android-apps.html" target="_blank">Writing Zippy Android Apps<&#47;a></p>

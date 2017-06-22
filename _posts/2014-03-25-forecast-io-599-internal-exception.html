@@ -1,0 +1,48 @@
+---
+layout: post
+status: publish
+published: true
+title: Forecast::IO 599 Internal Exception
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 926
+wordpress_url: http://log4think.com/?p=926
+date: '2014-03-25 16:42:30 +0800'
+date_gmt: '2014-03-25 05:42:30 +0800'
+categories:
+- 工具(Tool)
+tags: []
+comments: []
+---
+<p>Forecast.io provide great public weather data service API. They also provide SDK for many languages which is very friendly to developers. </p>
+<p>However if you are using their Perl module Forecast::IO, maybe you will have this error when you try to install it</p>
+<p>    Running make test<br />
+    PERL_DL_NONLAZY=1 &#47;usr&#47;bin&#47;perl "-MExtUtils::Command::MM" "-e" "test_harness(0, 'blib&#47;lib', 'blib&#47;arch')" t&#47;*.t<br />
+    t&#47;forecast.t .. # Please enter your Forecast.io API key:<br />
+    xxxxxxxxxxxxxxxxxxxx<br />
+    Request to 'https:&#47;&#47;api.forecast.io&#47;forecast&#47;xxxxxxxxxxxxxxxxxxxx&#47;43.6667,-79.4167,1373241600?units=auto' failed: 599 Internal Exception<br />
+    # Looks like your test exited with 255 before it could output anything.<br />
+    t&#47;forecast.t .. Dubious, test returned 255 (wstat 65280, 0xff00)<br />
+    Failed 6&#47;6 subtests</p>
+<p>The root cause of this error is Forecast::IO use HTTP::Tiny for HTTP request. And HTTP::Tiny need Net::SSLeay module to access HTTPS url. If the module was not installed HTTP::Tiny would only say 599 error and you can't know the real reason unless you look into the code and try it like below.</p>
+<p>    $ perl -e "use HTTP::Tiny; use Data::Dumper; print Dumper(HTTP::Tiny->new>get('https:&#47;&#47;api.forecast.io&#47;forecast&#47;xxxxxxxxxxxxxxxxxxxx&#47;43.6667,-79.4167,1373241600?units=auto'));"<br />
+    $VAR1 = {<br />
+              'success' => '',<br />
+              'headers' => {<br />
+                             'content-type' => 'text&#47;plain',<br />
+                             'content-length' => 53<br />
+                       },<br />
+              'status' => 599,<br />
+              'content' => 'Net::SSLeay 1.49 must be installed for https support',<br />
+              'reason' => 'Internal Exception',<br />
+              'url' => 'https:&#47;&#47;api.forecast.io&#47;forecast&#47;xxxxxxxxxxxxxxxxxxxx&#47;43.6667,-79.4167,1373241600?units=auto'<br />
+            };</p>
+<p>This is really a confused way to report this error. </p>
+<p>Anyway, to fix this issue you only need to install the module Net::SSLeay</p>
+<p>    sudo perl -MCPAN -e 'install Net::SSLeay'</p>

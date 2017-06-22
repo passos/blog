@@ -1,0 +1,105 @@
+---
+layout: post
+status: publish
+published: true
+title: Get SNMP(v3) working on Ubuntu 12.04
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 758
+wordpress_url: http://log4think.com/?p=758
+date: '2013-11-04 10:44:25 +0800'
+date_gmt: '2013-11-03 23:44:25 +0800'
+categories:
+- 系统(System)
+tags: []
+comments: []
+---
+<p>I am running an Ubuntu 12.04 as working environment on my local machine. Ubuntu 12.04 is latest LTS (Long Term Support) version so that it's a good choice for a server. I need to install SNMP on my machine recently and I install it by following command</p>
+<p>    sudo apt-get install snmpd snmp</p>
+<p>However it seems doesn't work. After checking the system log, I found the following errors in `&#47;var&#47;log&#47;syslog`</p>
+<p>     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 90: Error: Already have an entry for this process.<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 92: Error: Already have an entry for this process.<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 94: Error: Already have an entry for this process.<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 106: Error: includeAllDisks already specified.<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 106: Error: #011ignoring: includeAllDisks 10%<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 146: Error: duplicate trigger name<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 146: Error: duplicate trigger name<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 146: Error: duplicate trigger name<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 146: Error: duplicate trigger name<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 146: Error: duplicate trigger name<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 146: Error: duplicate trigger name<br />
+     snmpd[8461]: error on subcontainer '' insert (-1)<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 146: Error: duplicate trigger name<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 148: Error: duplicate trigger name<br />
+     snmpd[8461]: &#47;etc&#47;snmp&#47;snmpd.conf: line 148: Error: duplicate trigger name<br />
+     snmpd[8461]: duplicate table data attempted to be entered. row exists<br />
+     snmpd[8461]: Failed to register extend entry 'test1' - possibly duplicate name.<br />
+     snmpd[8461]: duplicate table data attempted to be entered. row exists<br />
+     snmpd[8461]: Failed to register extend entry 'test2' - possibly duplicate name.<br />
+     snmpd[8461]: Turning on AgentX master support.<br />
+     snmpd[8461]: Error opening specified endpoint "udp:127.0.0.1:161"<br />
+     snmpd[8461]: Server Exiting with code 1</p>
+<p>The content of `&#47;etc&#47;snmp&#47;snmpd.conf` is like</p>
+<p>     89                                # At least one  'mountd' process<br />
+     90 proc  mountd<br />
+     91                                # No more than 4 'ntalkd' processes - 0 is OK<br />
+     92 proc  ntalkd    4<br />
+     93                                # At least one 'sendmail' process, but no more than 10<br />
+     94 proc  sendmail 10 1<br />
+     95<br />
+     96 #  Walk the UCD-SNMP-MIB::prTable to see the resulting output<br />
+     97 #  Note that this table will be empty if there are no "proc" entries in the snmpd.conf file<br />
+     98<br />
+     99<br />
+    100 #<br />
+    101 #  Disk Monitoring<br />
+    102 #<br />
+    103                                # 10MBs required on root disk, 5% free on &#47;var, 10% free on all other disks<br />
+    104 disk       &#47;     10000<br />
+    105 disk       &#47;var  5%<br />
+    106 includeAllDisks  10%</p>
+<p>    145                                    # generate traps on UCD error conditions<br />
+    146 defaultMonitors          yes<br />
+    147                                    # generate traps on linkUp&#47;Down<br />
+    148 linkUpDownNotifications  yes<br />
+    149<br />
+    150</p>
+<p>So let's fix the problem. I comment the snmpd.conf configurations appeared in syslog, then use command `cat &#47;etc&#47;snmp&#47;snmpd.conf | grep -v '#' | grep -v '^\s*$'` to get a clean version.</p>
+<p>    view   systemonly  included   .1.3.6.1.2.1.1<br />
+    view   systemonly  included   .1.3.6.1.2.1.25.1<br />
+    rocommunity public  default    -V systemonly<br />
+    rouser   authOnlyUser<br />
+    sysLocation    Sitting on the Dock of the Bay<br />
+    sysContact     Me <me@example.org><br />
+    sysServices    72<br />
+    disk       &#47;     10000<br />
+    disk       &#47;var  5%<br />
+    load   12 10 5<br />
+    trapsink     localhost public<br />
+    iquerySecName   internalUser<br />
+    rouser          internalUser<br />
+    master          agentx<br />
+    createUser testuser MD5 "testpasswd"<br />
+    rouser testuser auth</p>
+<p>After updated `&#47;etc&#47;snmpd&#47;snmpd.conf` and `&#47;etc&#47;init.d&#47;snmpd restart`, now it's working.</p>
+<p>    $ snmpwalk -v 3 -l authNoPriv -a MD5 -u testuser -A testpasswd 127.0.0.1:161 sysDescr<br />
+    SNMPv2-MIB::sysDescr.0 = STRING: Linux simon-desktop 3.9.3-generic #19-Ubuntu SMP Wed Oct 9 16:20:46 UTC 2013 x86_64</p>
+<p>BTW, The [i3](http:&#47;&#47;i3wm.org) is the best tiling window manager I have ever used.</p>

@@ -1,0 +1,150 @@
+---
+layout: post
+status: publish
+published: true
+title: 长距离打车如何省钱？
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 63
+wordpress_url: http://log4think.com/?p=63
+date: '2008-11-18 23:02:52 +0800'
+date_gmt: '2008-11-18 12:02:52 +0800'
+categories:
+- 写代码(coding)
+tags:
+- javascript
+comments: []
+---
+<p>学JavaScript的时候写的一个用于在长距离打车时，计算多远抬一次表最省钱的抬表方案的小程序，参数可以根据需要随意修改。</p>
+<p>X轴是距离，Y轴是费用，不同的颜色表示不同的抬表方案</p>
+<p>大致的简单结论是20公里以上的时候，每15公里抬一次表，能省出10%左右吧。</p>
+<p><a href="http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2008&#47;11&#47;taxi.jpg"><img src="http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2008&#47;11&#47;taxi.jpg" alt="taxi" width="891" height="816" class="alignnone size-full wp-image-751" &#47;><&#47;a><br />
+下面代码存为taxi.html，然后打开即可在浏览器中看到结果。</p>
+<p>-----------------------------------------------</p>
+<pre><html><br />
+<script type="text&#47;javascript" src="http:&#47;&#47;www.walterzorn.com&#47;scripts&#47;wz_jsgraphics.js"><&#47;script></p>
+<p><body><br />
+<script type="text&#47;javascript"><br />
+<!--<br />
+function getPrice(distance, night) {<br />
+ var unitPrice = 2.0,<br />
+ basicDistance = 3,<br />
+ basicPrice = 10,<br />
+ extDistance = 15,<br />
+ extPrice = 3.0;</p>
+<p> var price = 0.0;<br />
+ if ( distance == 0 ) return 0;<br />
+ if ( distance <= basicDistance ) return basicPrice;</p>
+<p> if ( distance <= extDistance ) {<br />
+ price = basicPrice + unitPrice * (distance - basicDistance);<br />
+ return price;<br />
+ }</p>
+<p> price += basicPrice + unitPrice*(extDistance-basicDistance) + extPrice*(distance-extDistance)<br />
+ return price;<br />
+}</p>
+<p>function getPriceWithReset(distance, night, reset) {<br />
+ if ( reset == 0 ) {<br />
+ return getPrice(distance, night);<br />
+ } else {<br />
+ return getPrice(reset, night) * Math.floor(distance&#47;reset) + getPrice(distance % reset, night);<br />
+ }<br />
+}</p>
+<p>var coordXUnit = 8, coordYUnit = 3,<br />
+basicX = 100, basicY = 50,<br />
+coordMaxX = 101, coordMaxY = 251;</p>
+<p>function drawString(str, x, y) {<br />
+ jg.drawString(str, basicX+x*coordXUnit, basicY+(coordMaxY-y)*coordYUnit);<br />
+}</p>
+<p>function drawPoint(x, y) {<br />
+ drawLine(x, y, x, y);<br />
+}</p>
+<p>function drawLine(x1, y1, x2, y2) {<br />
+ jg.drawLine(basicX + x1*coordXUnit, basicY + (coordMaxY-y1)*coordYUnit, basicX + x2*coordXUnit, basicY + (coordMaxY-y2)*coordYUnit);<br />
+}</p>
+<p>function drawPolyline(ax, ay) {<br />
+ var axx = new Array(), ayy = new Array();</p>
+<p> for (var e in ax) {<br />
+ axx.push(basicX + (ax[e] * coordXUnit) );<br />
+ }</p>
+<p> for (var e in ay) {<br />
+ ayy.push(basicY + (coordMaxY - ay[e])*coordYUnit);<br />
+ }</p>
+<p> jg.drawPolyline(axx, ayy);<br />
+}</p>
+<p>function drawCoordinate() {<br />
+ jg.setColor("#ee8800");<br />
+ drawLine(0, 0, coordMaxX, 0);<br />
+ drawLine(0, 0, 0, coordMaxY);</p>
+<p> drawString(0, -2, -2);<br />
+ for (var i = 1; i < coordMaxX; i++) {<br />
+ if (i%5==0) {<br />
+ &#47;&#47; draw grid<br />
+ jg.setStroke(Stroke.DOTTED);<br />
+ drawLine(i, 0, i, coordMaxY);<br />
+ &#47;&#47; draw mark<br />
+ jg.setStroke(0);<br />
+ drawLine(i, 0, i, -2);<br />
+ drawString(i, i-1, -3);<br />
+ } else {<br />
+ drawLine(i, 0, i, -1);<br />
+ }<br />
+ }</p>
+<p> for (var i = 1; i < coordMaxY ; i++) {<br />
+ if (i%5==0) {<br />
+ &#47;&#47; draw grid<br />
+ jg.setStroke(Stroke.DOTTED);<br />
+ drawLine(0, i, coordMaxX, i);<br />
+ &#47;&#47; draw mark<br />
+ jg.setStroke(0);<br />
+ drawLine(0, i, -2, i);<br />
+ drawString(i, -7, i+1);<br />
+ } else {<br />
+ drawLine(0, i, -1, i);<br />
+ }<br />
+ }<br />
+}</p>
+<p>function drawPriceLine(night, reset) {<br />
+ var ax = new Array(), ay = new Array();</p>
+<p> for (var d=0; d<70; d++) {<br />
+ ax.push(d);<br />
+ ay.push(getPriceWithReset(d, 0, reset));<br />
+ }<br />
+ drawPolyline(ax, ay);<br />
+}</p>
+<p>&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47; main section &#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;<br />
+var jg = new jsGraphics();<br />
+jg.setFont("verdana,geneva,sans-serif", "10px", Font.PLAIN);</p>
+<p>drawCoordinate();<br />
+drawString("reset:", 0, -10);<br />
+jg.setColor("#000000");<br />
+drawPriceLine(0, 0);<br />
+drawString("0", 5, -10);<br />
+jg.setColor("#FF0000");<br />
+drawPriceLine(0, 10);<br />
+drawString("10", 10, -10);<br />
+jg.setColor("#00FF00");<br />
+drawPriceLine(0, 15);<br />
+drawString("15", 15, -10);<br />
+jg.setColor("#0000FF");<br />
+drawPriceLine(0, 20);<br />
+drawString("20", 20, -10);</p>
+<p>&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47; from wangjing to my home, 35KM &#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;&#47;<br />
+jg.setColor("#880000");<br />
+var xp = new Array(), yp = new Array();<br />
+for ( var i=10; i<30; i++) {<br />
+ xp.push(i);<br />
+ yp.push(getPriceWithReset(35, 0, i));<br />
+}<br />
+drawPolyline(xp, yp);</p>
+<p>drawString(getPriceWithReset(35, 0, 15), 0, -20);<br />
+jg.paint();<br />
+&#47;&#47;--><br />
+<&#47;script><br />
+<&#47;body><br />
+<&#47;html><&#47;pre></p>

@@ -1,0 +1,33 @@
+---
+layout: post
+status: publish
+published: true
+title: genymotion Qt error in Ubuntu
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 1005
+wordpress_url: http://log4think.com/?p=1005
+date: '2014-07-02 23:40:55 +0800'
+date_gmt: '2014-07-02 13:40:55 +0800'
+categories:
+- 工具(Tool)
+tags: []
+comments: []
+---
+<p>When I was trying to install Genymotion on Ubuntu 14.04, I got this error</p>
+<p>    Installing log handler<br />
+    Logging activities to file: &#47;home&#47;****<br />
+    Aborted (core dumped)</p>
+<p>the log file &#47;home&#47;xx&#47;.Genymotion&#47;genymotion.log has the following message:</p>
+<p>    ... [Genymotion] [Fatal] Cannot mix incompatible Qt library (version 0x40806) with this library (version 0x40804)</p>
+<p>The reason of this error is that Genymotion has its own Qt library which is not compatable with the system Qt library.</p>
+<p>To fix this error, we need to let genymotion use system's Qt library. The following commands can fix this issue</p>
+<p>    sudo apt-get install libxi-dev libxmu-dev<br />
+    # go to your genymotion directory<br />
+    mkdir QtLibs && mv *Qt*.so* QtLibs</p>

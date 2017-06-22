@@ -1,0 +1,124 @@
+---
+layout: post
+status: publish
+published: true
+title: How to debug with Android Logging
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 313
+wordpress_url: http://log4think.com/?p=313
+date: '2010-11-12 18:15:39 +0800'
+date_gmt: '2010-11-12 10:15:39 +0800'
+categories:
+- Android
+tags:
+- Android
+- Debug
+- log
+comments: []
+---
+<p># AP Logger Architecture</p>
+<p>![AP Logger Architecture](http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2010&#47;11&#47;aplogd.jpg)</p>
+<p>The above image shows the architecture of Android logging system.It provides a java class for logging named android.util.Log. It also provides log macros for native C applications in liblog.</p>
+<p>There are four log devices in the kernel. Three for user space log: ```&#47;dev&#47;log&#47;main```, ```&#47;dev&#47;log&#47;radio```, ```&#47;dev&#47;log&#47;events```. One for kernel space log: ```&#47;dev&#47;log&#47;kernel```.</p>
+<p>For user space applications, those binary log messages will be written to ```&#47;dev&#47;log&#47;events```. Those log messages with the tag "HTC_RIL" "RILJ" "RILC" "RILD" "RIL" "AT" "GSM" "STK" will be written to ```&#47;dev&#47;log&#47;radio```. Other log messages will be written to ```&#47;dev&#47;log&#47;main```.</p>
+<p>The log devices named ```&#47;dev&#47;log&#47;kernel``` is for kernel log message collection. A console is registered in ```&#47;dev&#47;log&#47;kernel``` and collect all the ```printk``` output to the device. It will output kernel log messages with the same log format as other log devices.</p>
+<p>```Logcat``` is a tool provided by Android. It could read log messages from log devices and output to the console or to a file. You can find the detail usage later. </p>
+<p>An ```aplog``` daemon is added for offline log. A filter is added to do some security checking.</p>
+<p>## Logging interface For Java applications</p>
+<p>### Logging class Introduction</p>
+<p>Class Name: ```android.util.Log```<br />
+General method:</p>
+<p>     Log.v()<br />
+     Log.d()<br />
+     Log.i()<br />
+     Log.w()</p>
+<p>The order in terms of verbosity, from least to most is ```ERROR, WARN, INFO, DEBUG, VERBOSE```. ```VERBOSE``` should never be compiled into an application except during development. ```DEBUG``` logs are compiled in but stripped at runtime. ```ERROR```, ```WARN``` and ```INFO``` logs are always kept. </p>
+<p>>TIP: A good convention is to declare a TAG constant in your class: ```private static final String TAG = "TAG_MyActivity";```<br />
+>and use that in subsequent calls to the log methods. ```Log.v(TAG, "index=" + i);```</p>
+<p>When you're building the string to pass into Log.d, Java uses a StringBuilder and at least three allocations occur: the StringBuilder itself, the buffer, and the String object. Realistically, there is also another buffer allocation and copy, and even more pressure on the GC. That means that if your log message is filtered out, you might be doing significant work and incurring significant overhead.</p>
+<p>For more details, please visit [Android log reference](http:&#47;&#47;developer.android.com&#47;reference&#47;android&#47;util&#47;Log.html)</p>
+<p>#### Program Example</p>
+<p>    package com.android.hello;<br />
+    import android.app.Activity;<br />
+    import android.os.Bundle;<br />
+    import android.widget.TextView;<br />
+    import android.util.Log; &#47;*import log class*&#47;</p>
+<p>    private static final String TAG = "MyActivity"; &#47;* define log tag*&#47;</p>
+<p>    public class !HelloAndroid extends Activity {<br />
+        &#47;** Called when the activity is first created. *&#47;<br />
+        @Override<br />
+        public void onCreaipte(Bundle savedInstanceState) {<br />
+            super.onCreate(savedInstanceState);</p>
+<p>            TextView tv = new TextView(this);<br />
+            tv.setText("Hello, Android");<br />
+            setContentView(tv);</p>
+<p>            Log.i(TAG, "this is a log.i message");<br />
+            Log.v(TAG, "test is a log.v message");<br />
+            Log.d(TAG, "test is a log.d message");<br />
+            Log.w(TAG, "test is a log.w message");<br />
+            Log.e(TAG, "test is a log.e message");<br />
+        }<br />
+    }</p>
+<p>## Logging interface For Native applications</p>
+<p>Header File ```include <cutils&#47;log.h>```</p>
+<p>###Logging Macros</p>
+<p>Common Logging Macros</p>
+<p>    LOGV LOGD LOGI LOGW LOGE</p>
+<p>Condition Logging Macros</p>
+<p>    LOGV_IF LOGD_IF LOGI_IF LOGW_IF LOGE_IF</p>
+<p>The definition is as below:</p>
+<p>    #define CONDITION(cond) (__builtin_expect((cond)!=0,0))<br />
+    #define LOGV_IF(cond, ...)   ( (CONDITION(cond)) ?((void)LOG(LOG_VERBOSE, LOG_TAG, VA_ARGS)) : (void)0 )</p>
+<p>#### Logging Macros overview</p>
+<p>API for sending log output.</p>
+<p>>NOTE:<br />
+><br />
+> 1.    You should define LOG_TAG in your C source code firstly.<br />
+> 2.    To build out C&#47;C++ applications outside android, you should add ```LOCAL_SHARED_LIBRARIES := liblog libcutils``` in your Android.mk file</p>
+<p>#### Program Example</p>
+<p>    #include <stdio.h><br />
+    #include <cutils&#47;log.h> &#47;* log header file*&#47;<br />
+    #include <cutils&#47;properties.h></p>
+<p>    &#47;* define log tag *&#47;<br />
+    #ifdef LOG_TAG<br />
+    #undef LOG_TAG<br />
+    #define LOG_TAG "app"<br />
+    #endif<br />
+    int main()<br />
+    {<br />
+        LOGV("Verbose: _app");<br />
+        LOGD("Debug: _app");<br />
+        LOGI("Info: _app");<br />
+        LOGW("Warn: _app");<br />
+        LOGE("Error: _app");<br />
+        printf("Hello Android.\n");<br />
+        return 0;<br />
+    }</p>
+<p>## Log command on Android</p>
+<p>Command location</p>
+<p>    &#47;system&#47;bin&#47;log</p>
+<p>Command usage</p>
+<p>    log [-p priorityChar] [-t tag] message</p>
+<p>priorityChar should be one of : ```v, d, i, w, e```</p>
+<p>## Log format on Android<br />
+The format of a log messages is</p>
+<p>    tv_sec	 tv_nsec	 priority	  pid	 tid 	 tag 	 messageLen 	  Message</p>
+<p>- tag: log tag<br />
+- tv_sec & tv_nsec: the timestamp of the log messages<br />
+- pid: the process id of where log messages come from<br />
+- tid: the thread id<br />
+- Priority value is one of the following character values, ordered from lowest to highest priority:</p>
+<p>    * V &mdash; Verbose (lowest priority)*<br />
+    * D &mdash; Debug*<br />
+    * I &mdash; Info*<br />
+    * W &mdash; Warning*<br />
+    * E &mdash; Error*<br />
+    * F &mdash; Fatal*<br />
+    * S &mdash; Silent (highest priority, on which nothing is ever printed)*</p>

@@ -1,0 +1,170 @@
+---
+layout: post
+status: publish
+published: true
+title: Python on vim
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+excerpt: "You can use **modeline** in python source file to set Vim automatically.
+  Vim will read top and bottom 3 lines comments and use the comment start with vim:
+  as modeline setting.\r\nAdd the following line to the top or bottom of your python
+  source file.\r\n\r\n    #vim: ai ts=4 sts=4 et sw=4 ft=python\r\n"
+wordpress_id: 870
+wordpress_url: http://log4think.com/?p=870
+date: '2014-01-10 22:53:54 +0800'
+date_gmt: '2014-01-10 11:53:54 +0800'
+categories:
+- Python
+tags:
+- Python
+- vim
+- modeline
+comments: []
+---
+<p>[TOC]</p>
+<p>## modeline ##</p>
+<p>You can use **modeline** in python source file to change Vim's setting. Vim will read top and bottom 3 lines comments and use the comment start with vim: as modeline setting. By do this, opener can use same setting to edit this file. This can avoid mixing of space and tab char in source code.</p>
+<p>Add the following line to the top or bottom of your python source file.</p>
+<p>    #vim: ai ts=4 sts=4 et sw=4 ft=python</p>
+<p>## .vimrc ##</p>
+<p>I am using following settings in my ~&#47;.vimrc for python</p>
+<p>    " Automatic reloading of .vimrc<br />
+    autocmd! bufwritepost .vimrc source %</p>
+<p>    " Better copy & paste<br />
+    " When you want to paste large blocks of code into vim, press F2 before you<br />
+    " paste. At the bottom you should see ``-- INSERT (paste) --``.</p>
+<p>    "" set pastetoggle=<F2><br />
+    "" set clipboard=unnamed</p>
+<p>    " Mouse and backspace<br />
+    "set mouse=a  " on OSX press ALT and click<br />
+    set bs=2     " make backspace behave like normal again</p>
+<p>    " Rebind <Leader> key<br />
+    " I like to have it here becuase it is easier to reach than the default and<br />
+    " it is next to ``m`` and ``n`` which I use for navigating between tabs.<br />
+    let mapleader = ","</p>
+<p>    " Bind nohl<br />
+    " Removes highlight of your last search<br />
+    " ``<C>`` stands for ``CTRL`` and therefore ``<C-n>`` stands for ``CTRL+n``<br />
+    noremap <C-n> :nohl<CR><br />
+    vnoremap <C-n> :nohl<CR><br />
+    inoremap <C-n> :nohl<CR></p>
+<p>    " Quicksave command<br />
+    "" noremap <C-Z> :update<CR><br />
+    "" vnoremap <C-Z> <C-C>:update<CR><br />
+    "" inoremap <C-Z> <C-O>:update<CR></p>
+<p>    " Quick quit command<br />
+    "" noremap <Leader>e :quit<CR>  " Quit current window<br />
+    "" noremap <Leader>E :qa!<CR>   " Quit all windows</p>
+<p>    " bind Ctrl+<movement> keys to move around the windows, instead of using Ctrl+w + <movement><br />
+    " Every unnecessary keystroke that can be saved is good for your health :)<br />
+    map <c-j> <c-w>j<br />
+    map <c-k> <c-w>k<br />
+    map <c-l> <c-w>l<br />
+    map <c-h> <c-w>h</p>
+<p>    " easier moving between tabs<br />
+    map <Leader>n <esc>:tabprevious<CR><br />
+    map <Leader>m <esc>:tabnext<CR></p>
+<p>    " map sort function to a key<br />
+    vnoremap <Leader>s :sort<CR></p>
+<p>    " easier moving of code blocks<br />
+    " Try to go into visual mode (v), thenselect several lines of code here and<br />
+    " then press ``>`` several times.<br />
+    "" vnoremap < <gv  " better indentation<br />
+    "" vnoremap > >gv  " better indentation</p>
+<p>    " Show whitespace<br />
+    " MUST be inserted BEFORE the colorscheme command<br />
+    "" autocmd ColorScheme * highlight ExtraWhitespace ctermbg=red guibg=red<br />
+    "" au InsertLeave * match ExtraWhitespace &#47;\s\+$&#47;</p>
+<p>    " Color scheme<br />
+    " mkdir -p ~&#47;.vim&#47;colors && cd ~&#47;.vim&#47;colors<br />
+    " wget -O wombat256mod.vim http:&#47;&#47;www.vim.org&#47;scripts&#47;download_script.php?src_id=13400<br />
+    set t_Co=256<br />
+    color wombat256mod</p>
+<p>    " Enable syntax highlighting<br />
+    " You need to reload this file for the change to apply<br />
+    filetype off<br />
+    filetype plugin indent on<br />
+    syntax on</p>
+<p>    " Showing line numbers and length<br />
+    set number  " show line numbers<br />
+    set tw=79   " width of document (used by gd)<br />
+    set nowrap  " don't automatically wrap on load<br />
+    set fo-=t   " don't automatically wrap text when typing<br />
+    if version > 703<br />
+        set colorcolumn=80<br />
+    endif<br />
+    highlight ColorColumn ctermbg=233</p>
+<p>    " easier formatting of paragraphs<br />
+    vmap Q gq<br />
+    nmap Q gqap</p>
+<p>    " Useful settings<br />
+    set history=700<br />
+    set undolevels=700</p>
+<p>    " Real programmers don't use TABs but spaces<br />
+    set tabstop=4<br />
+    set softtabstop=4<br />
+    set shiftwidth=4<br />
+    set shiftround<br />
+    set expandtab</p>
+<p>    " Make search case insensitive<br />
+    set hlsearch<br />
+    set incsearch<br />
+    set ignorecase<br />
+    set smartcase</p>
+<p>    " Disable stupid backup and swap files - they trigger too many events<br />
+    " for file system watchers<br />
+    set nobackup<br />
+    set nowritebackup<br />
+    set noswapfile</p>
+<p>    " Setup Pathogen to manage your plugins<br />
+    " mkdir -p ~&#47;.vim&#47;autoload ~&#47;.vim&#47;bundle<br />
+    " curl -so ~&#47;.vim&#47;autoload&#47;pathogen.vim https:&#47;&#47;raw.github.com&#47;tpope&#47;vim-pathogen&#47;HEAD&#47;autoload&#47;pathogen.vim<br />
+    " Now you can install any plugin into a .vim&#47;bundle&#47;plugin-name&#47; folder<br />
+    call pathogen#infect()</p>
+<p>    " ============================================================================<br />
+    " Python IDE Setup<br />
+    " ============================================================================</p>
+<p>    " Settings for vim-powerline<br />
+    " cd ~&#47;.vim&#47;bundle<br />
+    " git clone git:&#47;&#47;github.com&#47;Lokaltog&#47;vim-powerline.git<br />
+    set laststatus=2</p>
+<p>    " Settings for ctrlp<br />
+    " cd ~&#47;.vim&#47;bundle<br />
+    " git clone https:&#47;&#47;github.com&#47;kien&#47;ctrlp.vim.git<br />
+    let g:ctrlp_max_height = 30<br />
+    set wildignore+=*.pyc<br />
+    set wildignore+=*_build&#47;*<br />
+    set wildignore+=*&#47;coverage&#47;*</p>
+<p>    " Settings for jedi-vim<br />
+    " sudo easy_install jedi<br />
+    " cd ~&#47;.vim&#47;bundle<br />
+    " git clone git:&#47;&#47;github.com&#47;davidhalter&#47;jedi-vim.git<br />
+    let g:jedi#related_names_command = "<leader>z"<br />
+    let g:jedi#popup_on_dot = 0<br />
+    let g:jedi#popup_select_first = 0<br />
+    map <Leader>b Oimport ipdb; ipdb.set_trace() # BREAKPOINT<C-c></p>
+<p>    " Better navigating through omnicomplete option list<br />
+    " See http:&#47;&#47;stackoverflow.com&#47;questions&#47;2170023&#47;how-to-map-keys-for-popup-menu-in-vim<br />
+    set completeopt=longest,menuone<br />
+    function! OmniPopup(action)<br />
+        if pumvisible()<br />
+            if a:action == 'j'<br />
+                return "\<C-N>"<br />
+            elseif a:action == 'k'<br />
+                return "\<C-P>"<br />
+            endif<br />
+        endif<br />
+        return a:action<br />
+    endfunction</p>
+<p>    inoremap <silent><C-j> <C-R>=OmniPopup('j')<CR><br />
+    inoremap <silent><C-k> <C-R>=OmniPopup('k')<CR></p>
+<p>    " Python folding<br />
+    " mkdir -p ~&#47;.vim&#47;ftplugin<br />
+    " wget -O ~&#47;.vim&#47;ftplugin&#47;python_editing.vim http:&#47;&#47;www.vim.org&#47;scripts&#47;download_script.php?src_id=5492<br />
+    set nofoldenable</p>

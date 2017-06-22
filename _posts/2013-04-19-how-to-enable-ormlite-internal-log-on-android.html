@@ -1,0 +1,36 @@
+---
+layout: post
+status: publish
+published: true
+title: How to enable ORMLite internal log on Android
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 553
+wordpress_url: http://log4think.com/?p=553
+date: '2013-04-19 13:10:27 +0800'
+date_gmt: '2013-04-19 03:10:27 +0800'
+categories:
+- Android
+tags:
+- Android
+- log
+- ORMLite
+comments: []
+---
+<p>When using ORM system sometimes we want to what SQLs are executed at background to understand how it works. The ORMLite support several different log system, like SLF4J,COMMONS_LOGGING, LOG4J and ANDROID native log android.util.Log. It will use Android log for internal log by default. In code ```com.j256.ormlite.android.AndroidLog``` method ```isLevelEnabledInternal```, it will determinate if log is enabled by ```Log.isLoggable```</p>
+<p>    private final static String ALL_LOGS_NAME = "ORMLite";<br />
+    ...<br />
+    return Log.isLoggable(className, androidLevel) || Log.isLoggable(ALL_LOGS_NAME, androidLevel);</p>
+<p>That means there are two ways to enable ORMLite internal log. </p>
+<p>1. You can change the default level by setting a system property: 'setprop log.tag.<YOUR_LOG_TAG> <LEVEL>' Where level is either VERBOSE, DEBUG, INFO, WARN, ERROR, ASSERT, or SUPPRESS. SUPPRESS will turn off all logging for your tag.<br />
+2. You can also create a local.prop file that with the following in it: 'log.tag.<YOUR_LOG_TAG>=<LEVEL>' and place that in &#47;data&#47;local.prop.</p>
+<p>The YOUR_LOG_TAG could be any ORMLite short class name or "ORMLite" for all of them.  So that you can enable ORMLite internal log like this:</p>
+<p>    $ adb shell<br />
+    # setprop log.tag.ORMLite DEBUG</p>
+<p>Notice that setprop is temporary until you reboot your device, even on rooted phones. You can persist properties through reboots if you write them into local.prop which is only possible on rooted phones.</p>

@@ -1,0 +1,63 @@
+---
+layout: post
+status: publish
+published: true
+title: 为Java运行环境导入根证书解决Eclipse的TFS插件的"PKIX path building failed"错误
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+excerpt: '为Java运行环境导入根证书，解决Eclipse的TFS插件的"PKIX path building failed"错误： PKIX path
+  building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable
+  to find valid certification path to requested target '
+wordpress_id: 574
+wordpress_url: http://log4think.com/?p=574
+date: '2013-01-23 18:50:14 +0800'
+date_gmt: '2013-01-23 07:50:14 +0800'
+categories:
+- Java
+tags:
+- java
+- eclipse
+- TFS
+comments:
+- id: 9073
+  author: Jinyu Liu
+  author_email: simon.jinyu.liu@gmail.com
+  author_url: http://log4think.com
+  date: '2013-01-24 11:53:35 +0800'
+  date_gmt: '2013-01-24 00:53:35 +0800'
+  content: "Assume the certification file is zero.crt, make sure the java in your
+    runtime environment is point to $JAVA_HOME&#47;jre&#47;bin .\r\n\r\n    keytool
+    -import -noprompt -trustcacerts -alias zero -file zero.crt -keystore ~&#47;mykeystore\r\n\r\nThis
+    command will ask you to input the password of new keystore file.\r\n\r\n    keytool
+    -importkeystore -srckeystore ~&#47;mykeystore -destkeystore $JAVA_HOME&#47;jre&#47;lib&#47;security&#47;cacerts\r\n\r\nThis
+    command will import the keystore file which we create by first command. It will
+    also ask you to input the password for our keystore file and java keystore file.
+    The password of java keystore file is \"changeit\" on linux, and \"changeme\"
+    on mac.\r\n\r\nAfter made this change, retart the current application to let the
+    certification enabled.\r\n\r\nThere is a command line tools can be used to verify
+    if the certification works. Download this https:&#47;&#47;confluence.atlassian.com&#47;download&#47;attachments&#47;180292346&#47;SSLPoke.class?version=1&modificationDate=1236556489366&api=v2
+    , then run\r\n\r\n$ java SSLPoke tfs.yourserver.com 4343\r\nSuccessfully connected"
+---
+<p>最近在项目中必须要使用微软的TFS作为项目管理工具以及版本控制，而开发的IDE使用的是Eclipse。好在TFS有一个Eclipse的插件能够在跨平台的环境下工作。不过这个插件的11.0版本中，连结服务器的时候如果使用HTTPS连结，可能会有一个证书的认证错误问题，</p>
+<p>    sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target<br />
+    ...<br />
+    Caused by: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target<br />
+    ...</p>
+<p>这个问题的是由于Java自带的根证书库中不包含HTTPS服务器上的根证书，因此无法得到认证。解决办法是将服务器的根证书导入到Java运行环境中的根证书库中。假设我的证书文件是zero.cer，首先确保命令行下所引用的java是下文命令中所指向```$JAVA_HOME&#47;jre&#47;bin```的是一个JRE，如果不是则需要修改JAVA&#95;HOME的位置。</p>
+<p>    $ keytool -import -noprompt -trustcacerts -alias zero -file zero.cer -keystore ~&#47;mykeystore</p>
+<p>这个命令会新建一个keystore文件，命令运行后会要求输入密码，这个密码是新建的keystore文件的访问密码。</p>
+<p>For Linux:</p>
+<p>    $ sudo keytool -importkeystore -srckeystore ~&#47;mykeystore -destkeystore $JAVA_HOME&#47;jre&#47;lib&#47;security&#47;cacerts</p>
+<p>For Mac:</p>
+<p>    $ sudo keytool -importkeystore -srckeystore ~&#47;mykeystore -destkeystore &#47;Library&#47;Java&#47;Home&#47;lib&#47;security&#47;cacerts</p>
+<p>第二个命令将之前建好的keystore中的证书导入jre自带的keystore文件中。过程中会要求输入目标keystore（也就是jre自带的keystore）文件的密码，这个密码默认是 changeit （linux和mac下），或者是 changeme 。</p>
+<p>之后，重启Eclipse，再次连结TFS服务器，即可成功通过服务器验证。此外，可以下载一个小工具<a href="https:&#47;&#47;confluence.atlassian.com&#47;download&#47;attachments&#47;180292346&#47;SSLPoke.class?version=1&amp;modificationDate=1236556489366&amp;api=v2">SSLPoke<&#47;a>验证证书是否导入正常，下载之后在文件所在目录下，命令行运行</p>
+<p>    $ java SSLPoke tfs.yourserver.com 4343<br />
+    Successfully connected</p>
+<p>如果显示成功则说明证书导入的没有问题。</p>

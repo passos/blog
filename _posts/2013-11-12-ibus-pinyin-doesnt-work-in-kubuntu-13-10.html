@@ -1,0 +1,30 @@
+---
+layout: post
+status: publish
+published: true
+title: ibus-pinyin doesn't work in KUbuntu 13.10
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 771
+wordpress_url: http://log4think.com/?p=771
+date: '2013-11-12 11:59:40 +0800'
+date_gmt: '2013-11-12 00:59:40 +0800'
+categories:
+- 系统(System)
+tags: []
+comments: []
+---
+<p>ibus and ibus-pinyin doesn't work in KUbuntu 13.10. It looks like this</p>
+<p>    $ ibus-setup<br />
+    ERROR:root:Could not find any typelib for Gtk<br />
+    Traceback (most recent call last):<br />
+      File "&#47;usr&#47;share&#47;ibus&#47;setup&#47;main.py", line 29, in <module><br />
+        from gi.repository import Gtk<br />
+    ImportError: cannot import name Gtk</p>
+<p>The problem is a dependency package is missing. This problem can be solved by this command: `sudo apt-get install gir1.2-gtk-3.0`.</p>

@@ -1,0 +1,95 @@
+---
+layout: post
+status: publish
+published: true
+title: 在Android中使用OSGi框架(Apache Felix)
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 1027
+wordpress_url: http://log4think.com/?p=1027
+date: '2014-08-13 15:26:12 +0800'
+date_gmt: '2014-08-13 05:26:12 +0800'
+categories:
+- 译(translation)
+- Android
+tags:
+- Android
+- Felix
+- OSGi
+comments:
+- id: 9281
+  author: 在Android中使用OSGi框架(Knopflerfish) - Log4think
+  author_email: ''
+  author_url: http://log4think.com/use-knopflerfish-in-android/
+  date: '2014-08-13 15:51:04 +0800'
+  date_gmt: '2014-08-13 05:51:04 +0800'
+  content: "<p>[&#8230;] 如果只是想让OSGi框架在Android上跑起来，那么只需要编译Knopflerfish的Android版本，复制到设备上，然后就可以通过命令行启动起来了（见上一篇文章和这里）。
+    [&#8230;]<&#47;p>\n"
+---
+<p>本文描述了如何在Android中使用Apache Felix</p>
+<p>##Dalvik VM<br />
+Android允许开发者使用Java开发应用，但出于某些原因，代码实际是运行在名为Dalvik的一个针对移动设备平台的虚拟机上，而不是标准的Java虚拟机。Dalvik并不使用标准的Java字节码格式，而是使用Android SDK中的一个工具`dx`将由Java编译出来的类文件转换为另外一种类文件格式(.dex格式)。这个转换是在编译期完成的。</p>
+<p>##准备Bundles<br />
+虽然Felix从1.0.3开始内置了Android的支持，但是想要成功的让它跑起来还是需要费点力气。我们仍然需要安装Android SDK，并且PATH环境变量中包含Android SDK的工具目录`<android_SDK_HOME>&#47;tools`。</p>
+<p>*第一步：* 每一个用到的Jar文件，无论是Felix库还是你自己写的Bundle，都需要包含对应的DEX。也就说，需要为jar文件创建对应的dex文件：</p>
+<p>    dx --dex --output=classes.dex JAR_file.jar</p>
+<p>然后将这个dex文件加入到jar文件中：</p>
+<p>    aapt add JAR_file.jar classes.dex</p>
+<p>*第二步：* 将处理过的jar文件传到模拟器（或真机）中：</p>
+<p>    adb push JAR_file.jar path_emulator&#47;JAR_file.jar</p>
+<p>*第三步：* 以演示代码为例，准备Felix的jar文件和Bundle的jar文件：</p>
+<p>目录结构</p>
+<p>    osgi-android: &#47;<br />
+    \- bin<br />
+    \- bundle<br />
+    \- conf<br />
+    \- felix.sh</p>
+<p>准备Felix jar文件</p>
+<p>    export PATH=
+<path-to-android>&#47;tools:$PATH<br />
+    cd bin<br />
+    dx --dex --output=classes.dex felix.jar<br />
+    aapt add felix.jar classes.dex</p>
+<p>准备bundle的jar文件</p>
+<p>    cd bundle<br />
+    dx --dex --output=classes.dex     org.apache.felix.shell-1.0.0.jar<br />
+    aapt add org.apache.felix.shell-1.0.0.jar classes.dex<br />
+    dx --dex --output=classes.dex org.apache.felix.shell.tui-1.0.0.jar<br />
+    aapt add org.apache.felix.shell.tui-1.0.0.jar classes.dex<br />
+    dx --dex --output=classes.dex EnglishDictionary.jar<br />
+    aapt add EnglishDictionary.jar classes.dex<br />
+    dx --dex --output=classes.dex FrenchDictionary.jar<br />
+    aapt add FrenchDictionary.jar classes.dex<br />
+    dx --dex --output=classes.dex SpellChecker.jar<br />
+    aapt add SpellChecker.jar classes.dex</p>
+<p>复制到模拟器中</p>
+<p>    cd osgi-android<br />
+    find * -type f -exec adb push {} &#47;data&#47;felix&#47;{} \;</p>
+<p>##启动Felix<br />
+完成上面的步骤之后，现在可以准备在Android上启动Felix和Bundle了</p>
+<p>    adb shell<br />
+    cd &#47;data&#47;felix<br />
+    sh felix.sh</p>
+<p>`felix.sh`是一个shel脚本，用于启动Felix main class。</p>
+<p>    &#47;system&#47;bin&#47;dalvikvm -Xbootclasspath:&#47;system&#47;framework&#47;core.jar \<br />
+  -classpath bin&#47;felix.jar org.apache.felix.main.Main</p>
+<p>如果一切顺利，现在你应该能看到Felix的命令行shell了。输入`help`可以看到命令说明。</p>
+<p>现在可以安装EnglishDictionary,FrenchDictionary和SpellChecker来试试看Felix是否工作正常。这里有几个Apache Felix的示例：[Apache Felix 教程例子2](http:&#47;&#47;felix.apache.org&#47;site&#47;apache-felix-tutorial-example-2.html)，[Apache Felix 教程例子2b](http:&#47;&#47;felix.apache.org&#47;site&#47;apache-felix-tutorial-example-2b.html)，[Apache Felix 教程例子5](http:&#47;&#47;felix.apache.org&#47;site&#47;apache-felix-tutorial-example-5.html)。</p>
+<p>- *EnglishDictionary* - 提供一个字典服务，支持下面几个词"welcome", "to", "the", "osgi", "tutorial"<br />
+- *FrenchDictionary* -  提供一个字典服务，支持下面几个词"bienvenue", "au", "tutoriel", "osgi"<br />
+- *SpellChecker* - 提供一个拼写检查服务，可以检查第一个英文此单的几个单词</p>
+<p>在Felix Shell中启动Bundle</p>
+<p>    start file:bundle&#47;EnglishDictionary.jar<br />
+    start file:bundle&#47;FrenchDictionary.jar<br />
+    start file:bundle&#47;SpellChecker.jar</p>
+<p>##嵌入Felix<br />
+Apache Felix也可以被集成到Android的应用中。只需要在Activity的onCreate中嵌入Felix，然后用上面的办法启动bundle即可。</p>
+<p>##下载<br />
+上面的演示代码[在此下载](http:&#47;&#47;felix.apache.org&#47;site&#47;documentation.data&#47;osgi-android%20-%20felix%201.4,%20android%20SDK%201.0.zip)</p>
+<p>via [source](http:&#47;&#47;felix.apache.org&#47;site&#47;apache-felix-framework-and-google-android.html)</p>

@@ -1,0 +1,254 @@
+---
+layout: post
+status: publish
+published: true
+title: JavaScript 中几种不同的基于 prototype 继承方式的区别
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 1070
+wordpress_url: http://log4think.com/?p=1070
+date: '2016-12-13 19:24:52 +0800'
+date_gmt: '2016-12-13 08:24:52 +0800'
+categories:
+- JavsScript
+tags:
+- javascript
+- prototype
+comments:
+- id: 12331
+  author: Jinyu Liu
+  author_email: simon.jinyu.liu@gmail.com
+  author_url: http://log4think.com
+  date: '2016-12-13 20:33:46 +0800'
+  date_gmt: '2016-12-13 09:33:46 +0800'
+  content: "<p>prototype 都是正确的<&#47;p>\n"
+---
+<p>#JavaScript 中几种不同的基于 prototype 继承方式的区别</p>
+<h2>普通属性的继承<&#47;h2></p>
+<h3>第一种方式<&#47;h3></p>
+<p>来自于 <a href="https:&#47;&#47;developer.mozilla.org&#47;zh-CN&#47;docs&#47;Web&#47;JavaScript&#47;Guide&#47;Details_of_the_Object_Model">MDN 对象模型的细节<&#47;a></p>
+<pre><code>function Employee1 (name, dept) {<br />
+  console.log('Employee constructor')<br />
+  this.name = name || "";<br />
+  this.dept = dept || "general";<br />
+  this.work = function() {console.log("Employee.work")}<br />
+  this.workAsEmployee = function() { this.work() }<br />
+}</p>
+<p>function WorkerBee1 (projs) {<br />
+  console.log('WorkerBee constructor')<br />
+  this.projects = projs || [];<br />
+  this.work = function() {console.log("WorkerBee.work")}<br />
+  this.workAsBee = function() { this.work() }<br />
+}<br />
+WorkerBee1.prototype = new Employee1;</p>
+<p>function Engineer1 (mach) {<br />
+  console.log('Engineer constructor')<br />
+  this.dept = "engineering";<br />
+  this.machine = mach || "";<br />
+  this.work = function() {console.log("Engineer.work")}<br />
+  this.workAsEngineer = function() { this.work() }<br />
+}</p>
+<p>Engineer1.prototype = new WorkerBee1;</p>
+<p>e1 = new Engineer1()<br />
+e1.work()<br />
+console.log(Employee1.prototype.isPrototypeOf(e1))<br />
+console.log(WorkerBee1.prototype.isPrototypeOf(e1))<br />
+console.log(e1)<br />
+<&#47;code><&#47;pre></p>
+<p><img src="http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2016&#47;12&#47;prototype_inheritance_1.png" alt="Alt text" title="第一种方式的对象结构" &#47;></p>
+<h3>第二种方式<&#47;h3></p>
+<p>来自于 YUI 的实现，利用中间对象传递 prototype</p>
+<pre><code>function extend(Child, Parent) {<br />
+  var F = function () { };<br />
+  F.prototype = Parent.prototype;<br />
+  Child.prototype = new F();<br />
+  Child.prototype.constructor = Child;<br />
+  Object.defineProperty(Child, "super", { "value": Parent.prototype })<br />
+}</p>
+<p>function Employee2 (name, dept) {<br />
+  console.log('Employee constructor')<br />
+  this.name = name || "";<br />
+  this.dept = dept || "general";<br />
+  this.work = function() {console.log("Employee.work")}<br />
+  this.workAsEmployee = function() { this.work() }<br />
+}</p>
+<p>function WorkerBee2 (projs) {<br />
+  console.log('WorkerBee constructor')<br />
+  this.projects = projs || [];<br />
+  this.work = function() {console.log("WorkerBee.work")}<br />
+  this.workAsBee = function() { this.work() }<br />
+}<br />
+extend(WorkerBee2, Employee2);</p>
+<p>function Engineer2 (mach) {<br />
+  console.log('Engineer constructor')<br />
+  this.dept = "engineering";<br />
+  this.machine = mach || "";<br />
+  this.work = function() {console.log("Engineer.work")}<br />
+  this.workAsEngineer = function() { this.work() }<br />
+}<br />
+extend(Engineer2, WorkerBee2);</p>
+<p>e2 = new Engineer2()<br />
+e2.work()</p>
+<p>console.log(Employee2.prototype.isPrototypeOf(e2))<br />
+console.log(WorkerBee2.prototype.isPrototypeOf(e2))<br />
+console.log(e2)<br />
+<&#47;code><&#47;pre></p>
+<p><img src="http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2016&#47;12&#47;prototype_inheritance_2.png" alt="Alt text" title="第二种方式的对象结构" &#47;></p>
+<p>可以看到，区别主要在于，直接 <code>Child.prototype = new Parent()<&#47;code> 会把定义在 Parent 里面的方法也带到 prototype 里面去。<br />
+另外，这种方式并没有执行父类的构造函数。</p>
+<h2>对于定义在 prototype 里面的方法呢<&#47;h2></p>
+<p>下面对上面的方法定义进行一点改进，把方法定义在 prototype 里，类似正常的 OO 编程中在类里面定义方法。</p>
+<h3>第一种方式改进<&#47;h3></p>
+<pre><code>function Employee3 (name, dept) {<br />
+  console.log('Employee constructor')<br />
+  this.name = name || "";<br />
+  this.dept = dept || "general";<br />
+}<br />
+Employee3.prototype.work = function() {console.log("Employee.work")}<br />
+Employee3.prototype.workAsEmployee = function() { this.work() }</p>
+<p>function WorkerBee3 (projs) {<br />
+  console.log('WorkerBee constructor')<br />
+  this.projects = projs || [];<br />
+}<br />
+WorkerBee3.prototype = new Employee3;<br />
+WorkerBee3.prototype.work = function() {console.log("WorkerBee.work")}<br />
+WorkerBee3.prototype.workAsBee = function() { this.work() }</p>
+<p>function Engineer3 (mach) {<br />
+  console.log('Engineer constructor')<br />
+  this.dept = "engineering";<br />
+  this.machine = mach || "";<br />
+}<br />
+Engineer3.prototype = new WorkerBee3;<br />
+Engineer3.prototype.work = function() {console.log("Engineer.work")}<br />
+Engineer3.prototype.workAsEngineer = function() { this.work() }</p>
+<p>e3 = new Engineer3()<br />
+e3.work()</p>
+<p>console.log(Employee3.prototype.isPrototypeOf(e3))<br />
+console.log(WorkerBee3.prototype.isPrototypeOf(e3))<br />
+console.log(e3)<br />
+<&#47;code><&#47;pre></p>
+<p><img src="http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2016&#47;12&#47;prototype_inheritance_3.png" alt="Alt text" title="第一种方式改进后的对象结构" &#47;></p>
+<h3>第二种方式的改进<&#47;h3></p>
+<pre><code>function extend(Child, Parent) {<br />
+  var F = function () { };<br />
+  F.prototype = Parent.prototype;<br />
+  Child.prototype = new F();<br />
+  Child.prototype.constructor = Child;<br />
+  Object.defineProperty(Child, "super", { "value": Parent.prototype })<br />
+}</p>
+<p>function Employee4 (name, dept) {<br />
+  console.log('Employee constructor')<br />
+  this.name = name || "";<br />
+  this.dept = dept || "general";<br />
+}<br />
+Employee4.prototype.work = function() {console.log("Employee.work")}<br />
+Employee4.prototype.workAsEmployee = function() { this.work() }</p>
+<p>function WorkerBee4 (projs) {<br />
+  console.log('WorkerBee constructor')<br />
+  this.projects = projs || [];</p>
+<p>}<br />
+extend(WorkerBee4, Employee4);<br />
+WorkerBee4.prototype.work = function() {console.log("WorkerBee.work")}<br />
+WorkerBee4.prototype.workAsBee = function() { this.work() }</p>
+<p>function Engineer4 (mach) {<br />
+  console.log('Engineer constructor')<br />
+  this.dept = "engineering";<br />
+  this.machine = mach || "";<br />
+}<br />
+extend(Engineer4, WorkerBee4);<br />
+Engineer4.prototype.work = function() {console.log("Engineer.work")}<br />
+Engineer4.prototype.workAsEngineer = function() { this.work() }</p>
+<p>e4 = new Engineer4()<br />
+e4.work()</p>
+<p>console.log(Employee4.prototype.isPrototypeOf(e4))<br />
+console.log(WorkerBee4.prototype.isPrototypeOf(e4))<br />
+console.log(e4)<br />
+<&#47;code><&#47;pre></p>
+<p><img src="http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2016&#47;12&#47;prototype_inheritance_4.png" alt="Alt text" title="第二种方式改进后的对象结构" &#47;></p>
+<p>注意观察 <code>constructor<&#47;code> 和 <code>__proto__<&#47;code> 属性。</p>
+<h1>要执行所有构造函数<&#47;h1></p>
+<p>上述第二种方法，都没有执行父类的构造函数，也就没有真正的继承父类的初始化数据。为了弥补这一点，如下两种写法都可以达到目的。</p>
+<h2>利用 <code>super<&#47;code> 变量<&#47;h2></p>
+<pre><code>function extend(Child, Parent) {<br />
+  var F = function () { };<br />
+  F.prototype = Parent.prototype;<br />
+  Child.prototype = new F();<br />
+  Child.prototype.constructor = Child;<br />
+}</p>
+<p>function Employee5 (name, dept) {<br />
+  console.log('Employee constructor')<br />
+  this.name = name || "";<br />
+  this.dept = dept || "general";<br />
+}<br />
+Employee5.prototype.work = function() {console.log("Employee.work")}<br />
+Employee5.prototype.workAsEmployee = function() { this.work() }</p>
+<p>function WorkerBee5 (projs) {<br />
+  console.log('WorkerBee constructor')</p>
+<p>  this.super = Employee5;<br />
+  this.super();</p>
+<p>  this.projects = projs || [];</p>
+<p>}<br />
+extend(WorkerBee5, Employee5);<br />
+WorkerBee5.prototype.work = function() {console.log("WorkerBee.work")}<br />
+WorkerBee5.prototype.workAsBee = function() { this.work() }</p>
+<p>function Engineer5 (mach) {<br />
+  console.log('Engineer constructor')</p>
+<p>  this.super = WorkerBee5;<br />
+  this.super();</p>
+<p>  this.dept = "engineering";<br />
+  this.machine = mach || "";<br />
+}<br />
+extend(Engineer5, WorkerBee5);<br />
+Engineer5.prototype.work = function() {console.log("Engineer.work")}<br />
+Engineer5.prototype.workAsEngineer = function() { this.work() }</p>
+<p>e5 = new Engineer5()<br />
+e5.work()</p>
+<p>console.log(Employee5.prototype.isPrototypeOf(e5))<br />
+console.log(WorkerBee5.prototype.isPrototypeOf(e5))<br />
+console.log(e5)<br />
+<&#47;code><&#47;pre></p>
+<p><img src="http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2016&#47;12&#47;prototype_inheritance_5.png" alt="Alt text" title="利用 super 变量" &#47;></p>
+<h2>类似，但是用 <code>Parent.apply<&#47;code> 方法<&#47;h2></p>
+<pre><code>function extend(Child, Parent) {<br />
+  var F = function () { };<br />
+  F.prototype = Parent.prototype;<br />
+  Child.prototype = new F();<br />
+  Child.prototype.constructor = Child;<br />
+}</p>
+<p>function Employee6 (name, dept) {<br />
+  console.log('Employee constructor')<br />
+  this.name = name || "";<br />
+  this.dept = dept || "general";<br />
+}<br />
+Employee6.prototype.work = function() {console.log("Employee.work")}<br />
+Employee6.prototype.workAsEmployee = function() { this.work() }</p>
+<p>function WorkerBee6 (projs) {<br />
+  console.log('WorkerBee constructor')<br />
+  Employee6.apply(this)<br />
+  this.projects = projs || [];<br />
+}<br />
+extend(WorkerBee6, Employee6);<br />
+WorkerBee6.prototype.work = function() {console.log("WorkerBee.work")}<br />
+WorkerBee6.prototype.workAsBee = function() { this.work() }</p>
+<p>function Engineer6 (mach) {<br />
+  console.log('Engineer constructor')<br />
+  WorkerBee6.apply(this)<br />
+  this.dept = "engineering";<br />
+  this.machine = mach || "";<br />
+}<br />
+extend(Engineer6, WorkerBee6);<br />
+Engineer6.prototype.work = function() {console.log("Engineer.work")}<br />
+Engineer6.prototype.workAsEngineer = function() { this.work() }</p>
+<p>e6 = new Engineer6()<br />
+e6.work()</p>
+<p>console.log(Employee6.prototype.isPrototypeOf(e6))<br />
+console.log(WorkerBee6.prototype.isPrototypeOf(e6))<br />
+console.log(e6)<br />
+<&#47;code><&#47;pre></p>
+<p><img src="http:&#47;&#47;log4think.com&#47;wp-content&#47;uploads&#47;2016&#47;12&#47;prototype_inheritance_6.png" alt="Alt text" title="利用 Parent.apply 方法" &#47;></p>

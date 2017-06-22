@@ -1,0 +1,53 @@
+---
+layout: post
+status: publish
+published: true
+title: Android的滚动条实现细节
+author:
+  display_name: Simon Liu
+  login: simon
+  email: yuntao.liu@gmail.com
+  url: http://log4think.com
+author_login: simon
+author_email: yuntao.liu@gmail.com
+author_url: http://log4think.com
+wordpress_id: 546
+wordpress_url: http://log4think.com/?p=546
+date: '2012-09-22 13:37:14 +0800'
+date_gmt: '2012-09-22 03:37:14 +0800'
+categories:
+- Android
+tags: []
+comments: []
+---
+<p>在Android的UI系统中，每个View都有一个ScrollabilityCache的单例对象。该对象定义在View.java中，用于保存ScrollBar的相关实例和属性(ScrollBar实际上是一个ScrollBarDrawable对象)，并且实现了淡入淡出动画效果的线程代码。这些会在该View的所有ScrollBar中共用。<&#47;p></p>
+<p>以垂直滚动条为例，画出滚动条的过程大致是:<&#47;p></p>
+<pre>1. View::Draw<br />
+2. View::onDrawScrollBars<br />
+scrollBar.setParameters(computeVerticalScrollRange(),<br />
+            computeVerticalScrollOffset(),<br />
+            computeVerticalScrollExtent(), true);</p>
+<p>3. View::onDrawVerticalScrollBar<br />
+    scrollBar.draw</p>
+<p>4. ScrollBarDrawable::draw</p>
+<p>Rect r = getBounds();</p>
+<p>if (drawTrack) {<br />
+    drawTrack(canvas, r, vertical);<br />
+}</p>
+<p>if (drawThumb) {<br />
+    int size = vertical ? r.height() : r.width();<br />
+    int thickness = vertical ? r.width() : r.height();<br />
+    int length = Math.round((float) size * extent &#47; range);<br />
+    int offset = Math.round((float) (size - length) * mOffset &#47; (range - extent));</p>
+<p>    &#47;&#47; avoid the tiny thumb<br />
+    int minLength = thickness * 2;<br />
+    if (length < minLength) {<br />
+        length = minLength;<br />
+    }<br />
+    &#47;&#47; avoid the too-big thumb<br />
+    if (offset + length > size) {<br />
+        offset = size - length;<br />
+    }</p>
+<p>    drawThumb(canvas, r, offset, length, vertical);<br />
+}</p>
+<p><&#47;pre></p>

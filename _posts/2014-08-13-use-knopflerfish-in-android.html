@@ -1,0 +1,172 @@
+---
+layout: post
+status: publish
+published: true
+title: 在Android中使用OSGi框架(Knopflerfish)
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+excerpt: OSGi是用Java实现的一个模块化服务平台。每个模块被称之为Bundle，可以提供服务，也可以在不重启OSGi框架的情况下被安装或卸载。Knopflerfish是一个完全开源的OSGi
+  R4.2标准的实现。本文如何在Android应用程序中嵌入OSGi框架Knopflerfish
+wordpress_id: 1039
+wordpress_url: http://log4think.com/?p=1039
+date: '2014-08-13 15:51:00 +0800'
+date_gmt: '2014-08-13 05:51:00 +0800'
+categories:
+- Android
+- Java
+tags:
+- Android
+- OSGi
+- Knopflerfish
+comments: []
+---
+<p>OSGi是用Java实现的一个模块化服务平台。每个模块被称之为Bundle，可以提供服务，也可以在不重启OSGi框架的情况下被安装或卸载。Knopflerfish是一个完全开源的OSGi R4.2标准的实现。</p>
+<p>Android能够无缝的集成现有的Java代码，尽管使用的是与现有java字节码格式不兼容的虚拟机Dalvik，但是它可以轻松的将现有的jar文件和类转换为Android使用的Dalvik字节码格式。由于OSGi框架自身和Bundle都只是普通的jar文件，所以他们都应该可以在Android上运行。事实上，大多数时候是没问题的。</p>
+<p>>注意：这里只是如何在Android中嵌入OSGi系列文章的第一部分</p>
+<p>如果只是想让OSGi框架在Android上跑起来，那么只需要编译Knopflerfish的Android版本，复制到设备上，然后就可以通过命令行启动起来了（见[上一篇文章](http:&#47;&#47;log4think.com&#47;use-apache-felix-in-android&#47;)和[这里](http:&#47;&#47;log4think.com&#47;use-apache-felix-in-android&#47;)）。</p>
+<p>现在来看看如何将Knopflerfish和一系列Bundle嵌入到Android应用中，并且从应用中启动和管理OSGi框架和Bundle。</p>
+<p>通过代码启动OSGi大概需要下面这几个步骤：</p>
+<p>1. 创建framework实例（通过framework factory）<br />
+2. 初始化framework<br />
+3. 设置initlevel，并启动&#47;安装 bunldes<br />
+4. 为所有的initlevel重复前述步骤<br />
+5. 设置startlevel<br />
+6. 启动framework</p>
+<p>##嵌入Framework<br />
+现在创建一个Android应用，包含一个Actviity。然后在app中引入`framework.jar`，这样就可以通过一个`FrameworkFactory`创建OSGi的framework实例了。</p>
+<p>    import org.knopflerfish.framework.FrameworkFactoryImpl;<br />
+    import org.osgi.framework.BundleException;<br />
+    import org.osgi.framework.launch.Framework;<br />
+    import org.osgi.framework.launch.FrameworkFactory;<br />
+    ...<br />
+    private Framework mFramework;<br />
+    ...<br />
+    Dictionary fwprops = new Hashtable();<br />
+    &#47;&#47; add any framework properties to fwprops<br />
+    FrameworkFactory ff = new FrameworkFactoryImpl();<br />
+    mFramework = ff.newFramework(fwprops);<br />
+    try {<br />
+        mFramework.init();<br />
+    } catch (BundleException be) {<br />
+        &#47;&#47; framework initialization failed<br />
+    }</p>
+<p>引入的jar文件不需要dex化，后面build的时候会自动完成这一步的。</p>
+<p>##Bundle文件dex化<br />
+现在bundle的jar文件可以被添加到应用中了，可以作为raw资源放在`res&#47;raw`下面，也可以放在`assets&#47;bunldes`。后面这种方式有一个优势：不需要被重命名，而且res资源的名字数量是有限的。</p>
+<p>Bundle的jar文件需要被转换成dex格式，下面这个简单的脚本可以完成这件事：</p>
+<p>    dexify() {<br />
+        for f in $*; do<br />
+            tmpdir="`mktemp -d`"<br />
+            tmpfile="${tmpdir}&#47;classes.dex"<br />
+            dx --dex --output=${tmpfile} ${f}<br />
+            aapt add ${f} ${tmpfile}<br />
+            rm -f ${tmpfile}<br />
+            rmdir ${tmpdir}<br />
+        done<br />
+    }</p>
+<p>然后就可以通过命令`dexify assets&#47;bundles&#47;*`将bundles转换为dex文件。如果是按照Knopflerfish的[教程](http:&#47;&#47;www.knopflerfish.org&#47;releases&#47;3.2.0&#47;docs&#47;android_dalvik_tutorial.html)编译的Knopflerfish，那么不需要将这些bundle的jar文件dex化，但是必须从knopflerfish的framework.jar文件中去掉classes.dex。</p>
+<p>##安装、启动Bundles</p>
+<p>下面这段代码可以帮助启动bundle，并设置initlevel&#47;startlevel。</p>
+<p>    private void startBundle(String bundle) {<br />
+        Log.d(TAG, "starting bundle " + bundle);<br />
+        InputStream bs;<br />
+        try {<br />
+            bs = getAssets().open("bundles&#47;" + bundle);<br />
+        } catch (IOException e) {<br />
+            Log.e(TAG, e.toString());<br />
+            return;<br />
+        }</p>
+<p>        long bid = -1;<br />
+        Bundle[] bl = mFramework.getBundleContext().getBundles();<br />
+        for (int i = 0; bl != null && i < bl.length; i++) {<br />
+            if (bundle.equals(bl[i].getLocation())) {<br />
+                bid = bl[i].getBundleId();<br />
+            }<br />
+        }</p>
+<p>        Bundle b = mFramework.getBundleContext().getBundle(bid);<br />
+        if (b == null) {<br />
+            Log.e(TAG, "can't start bundle " + bundle);<br />
+            return;<br />
+        }</p>
+<p>        try {<br />
+            b.start(Bundle.START_ACTIVATION_POLICY);<br />
+            Log.d(TAG, "bundle " + b.getSymbolicName() + "&#47;" + b.getBundleId() + "&#47;"<br />
+                    + b + " started");<br />
+        } catch (BundleException be) {<br />
+            Log.e(TAG, be.toString());<br />
+        }</p>
+<p>        try {<br />
+            bs.close();<br />
+        } catch (IOException e) {<br />
+            Log.e(TAG, e.toString());<br />
+        }<br />
+    }</p>
+<p>    private void installBundle(String bundle) {<br />
+        Log.d(TAG, "installing bundle " + bundle);<br />
+        InputStream bs;<br />
+        try {<br />
+            bs = getAssets().open("bundles&#47;" + bundle);<br />
+        } catch (IOException e) {<br />
+            Log.e(TAG, e.toString());<br />
+            return;<br />
+        }</p>
+<p>        try {<br />
+            mFramework.getBundleContext().installBundle(bundle, bs);<br />
+            Log.d(TAG, "bundle " + bundle + " installed");<br />
+        } catch (BundleException be) {<br />
+            Log.e(TAG, be.toString());<br />
+        }</p>
+<p>        try {<br />
+            bs.close();<br />
+        } catch (IOException e) {<br />
+            Log.e(TAG, e.toString());<br />
+        }<br />
+    }</p>
+<p>    private void setStartLevel(int startLevel) {<br />
+        ServiceReference sr = mFramework.getBundleContext()<br />
+            .getServiceReference(StartLevel.class.getName());<br />
+        if (sr != null) {<br />
+            StartLevel ss =<br />
+                (StartLevel)mFramework.getBundleContext().getService(sr);<br />
+            ss.setStartLevel(startLevel);<br />
+            mFramework.getBundleContext().ungetService(sr);<br />
+        } else {<br />
+            Log.e(TAG, "No start level service " + startLevel);<br />
+        }<br />
+    }</p>
+<p>    private void setInitlevel(int level) {<br />
+        ServiceReference sr = mFramework.getBundleContext()<br />
+            .getServiceReference(StartLevel.class.getName());<br />
+        if (sr != null) {<br />
+            StartLevel ss =<br />
+                (StartLevel)mFramework.getBundleContext().getService(sr);<br />
+            ss.setInitialBundleStartLevel(level);<br />
+            mFramework.getBundleContext().ungetService(sr);<br />
+            Log.d(TAG, "initlevel " + level + " set");<br />
+        } else {<br />
+            Log.e(TAG, "No start level service " + level);<br />
+        }<br />
+    }</p>
+<p>现在可以安装并启动bundle了</p>
+<p>    setInitlevel(1);<br />
+    installBundle("event_all-3.0.4.jar");<br />
+    startBundle("event_all-3.0.4.jar");<br />
+    &#47;&#47; install&#47;start other bundles...</p>
+<p>    setStartLevel(10);</p>
+<p>    try {<br />
+        mFramework.start();<br />
+    } catch (BundleException be) {<br />
+        Log.e(TAG, be.toString());<br />
+        &#47;&#47; framework start failed<br />
+    }</p>
+<p>    Log.d(TAG, "OSGi framework running, state: " + mFramework.getState());</p>
+<p>## 问题<br />
+如果你按照上文所述一步步做下来了，你可能会发现还是没法跑起来。由于framework的classloader是在运行期加载的bundle文件，Dalvik虚拟机会试图将优化过的dex类文件放到一个系统目录下面`&#47;data&#47;dalvik-cache`，但是没有root权限的普通应用程序是不能写入那儿的。</p>
+<p>下回将如何解决这个问题。</p>
+<p>via [source](http:&#47;&#47;nilvec.com&#47;embedding-osgi-into-an-android-application-part-1.html)</p>

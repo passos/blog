@@ -1,0 +1,44 @@
+---
+layout: post
+status: publish
+published: true
+title: Solaris 下安装Perl的DBD-mysql模块失败的原因以及解决办法
+author:
+  display_name: Jinyu Liu
+  login: kfqp84
+  email: simon.jinyu.liu@gmail.com
+  url: http://log4think.com
+author_login: kfqp84
+author_email: simon.jinyu.liu@gmail.com
+author_url: http://log4think.com
+excerpt: Solaris 下安装Perl的DBD-mysql模块失败的原因以及解决办法
+wordpress_id: 646
+wordpress_url: http://log4think.com/?p=646
+date: '2005-07-16 11:41:04 +0800'
+date_gmt: '2005-07-16 01:41:04 +0800'
+categories:
+- 系统(System)
+tags:
+- solaris
+- perl
+comments: []
+---
+<p>Solaris下安装Perl的DBD::Mysql模块，已经出了两次问题了。现总结如下：</p>
+<p>问题一：无法找到mysql_config<br />
+1. 下载DBD-mysql-3.0000<br />
+2. 解压<br />
+3. make Makefile.PL<br />
+4. 提示找不到mysql_config<br />
+解决办法：<br />
+出现这个问题是因为没有将mysql_config加入环境变量PATH中，只要将mysql&#47;bin目录加入到路径中就可以了。<br />
+PATH=$PATH:&#47;usr&#47;local&#47;mysql&#47;bin<br />
+export PATH<br />
+然后重新make Makefile.PL</p>
+<p>问题二：无法找到库libmysqlclient.so<br />
+solaris的mysql发行版本的库文件都是.a的静态库，DBD::Mysql模块需要.so的动态库编译。可以下载带源码的Mysql自行编译出.so的动态库。</p>
+<p>问题三：编译不通过<br />
+那是因为mysql_config给Makefile.PL的cflags参数不正确。在我的Solaris上，给的参数是<br />
+-I&#47;usr&#47;local&#47;mysql&#47;include -Xa -xstrconst -mt -D_FORTEC_ -xarch=v9<br />
+gcc 版本是 3.4.0，而-Xa -xstrconst -mt -xarch=v9这几个参数，solaris上的gcc不认。因此我手工指定参数生成Makefile：<br />
+perl Makefile.PL --cflags="-I&#47;usr&#47;local&#47;mysql&#47;include -D_FORTEC_"</p>
+<p>之后make ; make install 一切顺利。</p>
